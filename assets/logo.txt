@@ -1,0 +1,2 @@
+This is a placeholder for the Ottr app logo.
+In a real implementation, you would replace this with an actual image file (PNG, SVG, etc.).
