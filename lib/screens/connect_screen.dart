@@ -248,7 +248,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
     return Scaffold(
       backgroundColor: AppConstants.lightColor,
       appBar: AppBar(
-        title: const Text('OTTR'),
+        title: const Text('Ottr'),
         backgroundColor: AppConstants.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,

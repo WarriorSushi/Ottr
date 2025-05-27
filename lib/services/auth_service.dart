@@ -23,16 +23,37 @@ class AuthService {
   }
 
   // Register with email and password
-  Future<UserCredential> registerWithEmailAndPassword(
+  Future<User?> registerWithEmailAndPassword(
       String email, String password) async {
     try {
+      print('Attempting to register user with email: $email');
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return result;
+      print('Registration successful: ${result.user?.uid}');
+      return result.user;
+    } on FirebaseAuthException catch (e) {
+      // Handle Firebase-specific errors
+      print('FirebaseAuthException: ${e.code} - ${e.message}');
+      throw e;
     } catch (e) {
-      rethrow;
+      // Handle the PigeonUserDetails error specifically
+      print('Registration error type: ${e.runtimeType}');
+      print('Registration error message: ${e.toString()}');
+      
+      if (e.toString().contains('PigeonUserDetails') || 
+          e.toString().contains('List<Object?>')) {
+        // The user might have been created despite the error
+        // Try to get the current user
+        await Future.delayed(const Duration(milliseconds: 1000));
+        User? user = _auth.currentUser;
+        if (user != null) {
+          print('Retrieved current user despite error: ${user.uid}');
+          return user;
+        }
+      }
+      throw e;
     }
   }
 

@@ -50,11 +50,47 @@ class _AuthScreenState extends State<AuthScreen> {
         }
       } else {
         // Register
-        await _authService.registerWithEmailAndPassword(_email, _password);
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const UsernameScreen()),
-          );
+        try {
+          User? user = await _authService.registerWithEmailAndPassword(_email, _password);
+          if (user != null && mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const UsernameScreen()),
+            );
+          }
+        } catch (e) {
+          // If registration fails with type error but Firebase actually created the account,
+          // we can try to sign in with the same credentials
+          if (e.toString().contains('PigeonUserDetails') || 
+              e.toString().contains('List<Object?>')) {
+            // Wait a moment and check if user is now authenticated
+            await Future.delayed(const Duration(milliseconds: 500));
+            if (FirebaseAuth.instance.currentUser != null && mounted) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const UsernameScreen()),
+              );
+              return;
+            }
+            
+            // If not, try explicit sign in
+            try {
+              await _authService.signInWithEmailAndPassword(_email, _password);
+              if (mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const UsernameScreen()),
+                );
+              }
+              return;
+            } catch (_) {
+              // If sign-in also fails, show a user-friendly error
+              setState(() {
+                _errorMessage = 'Registration issue. Please try again or restart the app.';
+                _isLoading = false;
+              });
+            }
+          } else {
+            // For other errors, rethrow to be caught by the outer catch block
+            rethrow;
+          }
         }
       }
     } on FirebaseAuthException catch (e) {
