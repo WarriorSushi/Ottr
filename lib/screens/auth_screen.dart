@@ -125,123 +125,194 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppConstants.lightColor,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // App logo
-                  Image.asset(
-                    'assets/images/logo.png',
-                    width: 120,
-                    height: 120,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    _isLogin ? 'Welcome Back' : 'Create Account',
-                    style: AppConstants.headingStyle,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isLogin ? 'Sign in to continue' : 'Sign up to get started',
-                    style: AppConstants.subheadingStyle,
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Email field
-                  TextFormField(
-                    decoration: InputDecoration(
-                      labelText: AppConstants.emailHint,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppConstants.backgroundGradient,
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // App logo with subtle animation
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0.95, end: 1.0),
+                      duration: const Duration(milliseconds: 1500),
+                      curve: Curves.easeInOut,
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: value,
+                          child: child,
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        width: 120,
+                        height: 120,
                       ),
-                      prefixIcon: const Icon(Icons.email),
                     ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!value.contains('@') || !value.contains('.')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      _email = value?.trim() ?? '';
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 24),
+                    Text(
+                      _isLogin ? 'Welcome Back' : 'Create Account',
+                      style: AppConstants.headingStyle,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _isLogin ? 'Sign in to continue' : 'Sign up to get started',
+                      style: AppConstants.taglineStyle,
+                    ),
+                    const SizedBox(height: 32),
 
-                  // Password field
-                  TextFormField(
-                    decoration: InputDecoration(
-                      labelText: AppConstants.passwordHint,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                    // Email field with improved styling
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppConstants.lightColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [AppConstants.defaultShadow],
                       ),
-                      prefixIcon: const Icon(Icons.lock),
-                    ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      if (!_isLogin && value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      _password = value?.trim() ?? '';
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Error message
-                  if (_errorMessage.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Text(
-                        _errorMessage,
-                        style: const TextStyle(
-                          color: AppConstants.errorColor,
-                          fontSize: 14,
+                      child: TextFormField(
+                        decoration: InputDecoration(
+                          labelText: AppConstants.emailHint,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppConstants.accentColor, width: 1),
+                          ),
+                          filled: true,
+                          fillColor: AppConstants.lightColor,
+                          prefixIcon: Icon(Icons.email, color: AppConstants.primaryColor.withOpacity(0.7)),
+                          labelStyle: TextStyle(color: AppConstants.darkColor.withOpacity(0.7)),
                         ),
-                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!value.contains('@') || !value.contains('.')) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) {
+                          _email = value?.trim() ?? '';
+                        },
                       ),
                     ),
+                    const SizedBox(height: 16),
 
-                  // Submit button
-                  CustomButton(
-                    text: _isLogin
-                        ? AppConstants.loginButton
-                        : AppConstants.registerButton,
-                    onPressed: _submitForm,
-                    isLoading: _isLoading,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Toggle auth mode
-                  TextButton(
-                    onPressed: _toggleAuthMode,
-                    child: Text(
-                      _isLogin
-                          ? '${AppConstants.noAccountText}Register'
-                          : '${AppConstants.haveAccountText}Login',
-                      style: TextStyle(
-                        color: AppConstants.primaryColor,
-                        fontWeight: FontWeight.w500,
+                    // Password field with improved styling
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppConstants.lightColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [AppConstants.defaultShadow],
+                      ),
+                      child: TextFormField(
+                        decoration: InputDecoration(
+                          labelText: AppConstants.passwordHint,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppConstants.accentColor, width: 1),
+                          ),
+                          filled: true,
+                          fillColor: AppConstants.lightColor,
+                          prefixIcon: Icon(Icons.lock, color: AppConstants.primaryColor.withOpacity(0.7)),
+                          labelStyle: TextStyle(color: AppConstants.darkColor.withOpacity(0.7)),
+                        ),
+                        obscureText: true,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          if (!_isLogin && value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) {
+                          _password = value?.trim() ?? '';
+                        },
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 24),
+
+                    // Error message with icon
+                    if (_errorMessage.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: AppConstants.errorColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.error_outline, color: AppConstants.errorColor, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _errorMessage,
+                                style: AppConstants.errorTextStyle,
+                                textAlign: TextAlign.left,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+
+                    // Submit button
+                    CustomButton(
+                      text: _isLogin
+                          ? AppConstants.loginButton
+                          : AppConstants.registerButton,
+                      onPressed: _submitForm,
+                      isLoading: _isLoading,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Toggle auth mode with improved styling
+                    TextButton(
+                      onPressed: _toggleAuthMode,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        _isLogin
+                            ? '${AppConstants.noAccountText}Register'
+                            : '${AppConstants.haveAccountText}Login',
+                        style: TextStyle(
+                          color: AppConstants.primaryColor,
+                          fontWeight: FontWeight.w500,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppConstants.accentColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

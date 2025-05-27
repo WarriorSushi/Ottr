@@ -63,31 +63,75 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppConstants.lightColor,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // App logo
-            Image.asset('assets/images/logo.png', width: 150, height: 150),
-            const SizedBox(height: 24),
-            Text(
-              AppConstants.appName,
-              style: AppConstants.headingStyle.copyWith(fontSize: 32),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              AppConstants.appTagline,
-              style: AppConstants.subheadingStyle,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(
-                AppConstants.primaryColor,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppConstants.backgroundGradient,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Animated logo with gentle float effect
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(seconds: 1),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 10 * (1 - value)), // Small float effect
+                      child: child,
+                    ),
+                  );
+                },
+                child: Image.asset('assets/images/logo.png', width: 150, height: 150),
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              // App name with fade-in effect
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeOut,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: child,
+                  );
+                },
+                child: Text(
+                  AppConstants.appName,
+                  style: AppConstants.headingStyle.copyWith(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Tagline with lighter weight and opacity
+              Text(
+                AppConstants.appTagline,
+                style: AppConstants.taglineStyle,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              // Subtle loading indicator
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [AppConstants.defaultShadow],
+                ),
+                padding: const EdgeInsets.all(8),
+                child: const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Color(0xFFEE6C4D), // Coral accent color for contrast
+                  ),
+                  strokeWidth: 3,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
