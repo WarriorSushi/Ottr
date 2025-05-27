@@ -8,7 +8,7 @@ import 'connect_screen.dart';
 
 /// Splash screen shown when the app starts
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -27,14 +27,14 @@ class _SplashScreenState extends State<SplashScreen> {
   void navigateToNextScreen() async {
     // Check if user is already logged in
     User? user = FirebaseAuth.instance.currentUser;
-    
+
     if (user != null) {
       // User is logged in, check if username is set
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
-      
+
       if (userDoc.exists && userDoc.data()?['username'] != null) {
         // Username is set, navigate to connect screen
         if (mounted) {
@@ -68,25 +68,8 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // App logo placeholder
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: AppConstants.primaryColor,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Center(
-                child: Text(
-                  'OTTR',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
+            // App logo
+            Image.asset('assets/images/logo.png', width: 150, height: 150),
             const SizedBox(height: 24),
             Text(
               AppConstants.appName,

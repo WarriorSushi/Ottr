@@ -9,12 +9,12 @@ class CustomButton extends StatelessWidget {
   final bool isOutlined;
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.isLoading = false,
     this.isOutlined = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,12 +24,16 @@ class CustomButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isOutlined ? Colors.transparent : AppConstants.primaryColor,
-          foregroundColor: isOutlined ? AppConstants.primaryColor : Colors.white,
-          side: isOutlined ? BorderSide(color: AppConstants.primaryColor) : null,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          backgroundColor: isOutlined
+              ? Colors.transparent
+              : AppConstants.primaryColor,
+          foregroundColor: isOutlined
+              ? AppConstants.primaryColor
+              : Colors.white,
+          side: isOutlined
+              ? BorderSide(color: AppConstants.primaryColor)
+              : null,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: isOutlined ? 0 : 2,
         ),
         child: isLoading

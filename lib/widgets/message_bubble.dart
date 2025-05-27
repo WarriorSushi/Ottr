@@ -10,26 +10,24 @@ class MessageBubble extends StatelessWidget {
   final String senderUsername;
 
   const MessageBubble({
-    Key? key,
+    super.key,
     required this.message,
     required this.isMe,
     required this.senderUsername,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       child: Column(
-        crossAxisAlignment:
-            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isMe
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Text(
             isMe ? 'You' : senderUsername,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
           const SizedBox(height: 2),
           Container(
@@ -57,9 +55,7 @@ class MessageBubble extends StatelessWidget {
                 Text(
                   timeago.format(message.timestamp),
                   style: TextStyle(
-                    color: isMe
-                        ? Colors.white.withOpacity(0.7)
-                        : Colors.grey,
+                    color: isMe ? Colors.white.withOpacity(0.7) : Colors.grey,
                     fontSize: 12,
                   ),
                 ),

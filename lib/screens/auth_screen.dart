@@ -7,7 +7,7 @@ import 'username_screen.dart';
 
 /// Authentication screen for login and registration
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({Key? key}) : super(key: key);
+  const AuthScreen({super.key});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -16,7 +16,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final AuthService _authService = AuthService();
   final _formKey = GlobalKey<FormState>();
-  
+
   bool _isLogin = true;
   bool _isLoading = false;
   String _email = '';
@@ -59,7 +59,7 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } on FirebaseAuthException catch (e) {
       String message = 'An error occurred';
-      
+
       if (e.code == 'user-not-found' || e.code == 'wrong-password') {
         message = 'Invalid email or password';
       } else if (e.code == 'email-already-in-use') {
@@ -69,7 +69,7 @@ class _AuthScreenState extends State<AuthScreen> {
       } else if (e.code == 'invalid-email') {
         message = 'Invalid email address';
       }
-      
+
       setState(() {
         _errorMessage = message;
       });
@@ -100,24 +100,11 @@ class _AuthScreenState extends State<AuthScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // App logo placeholder
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'OTTR',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  // App logo
+                  Image.asset(
+                    'assets/images/logo.png',
+                    width: 120,
+                    height: 120,
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -126,13 +113,11 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isLogin
-                        ? 'Sign in to continue'
-                        : 'Sign up to get started',
+                    _isLogin ? 'Sign in to continue' : 'Sign up to get started',
                     style: AppConstants.subheadingStyle,
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Email field
                   TextFormField(
                     decoration: InputDecoration(
@@ -157,7 +142,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Password field
                   TextFormField(
                     decoration: InputDecoration(
@@ -182,7 +167,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Error message
                   if (_errorMessage.isNotEmpty)
                     Padding(
@@ -196,7 +181,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                  
+
                   // Submit button
                   CustomButton(
                     text: _isLogin
@@ -206,7 +191,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     isLoading: _isLoading,
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Toggle auth mode
                   TextButton(
                     onPressed: _toggleAuthMode,

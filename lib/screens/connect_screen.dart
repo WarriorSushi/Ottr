@@ -10,7 +10,7 @@ import 'chat_screen.dart';
 
 /// Screen for connecting with another user
 class ConnectScreen extends StatefulWidget {
-  const ConnectScreen({Key? key}) : super(key: key);
+  const ConnectScreen({super.key});
 
   @override
   State<ConnectScreen> createState() => _ConnectScreenState();
@@ -21,7 +21,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
   final UserService _userService = UserService();
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _isSearching = false;
   String _errorMessage = '';
@@ -55,9 +55,10 @@ class _ConnectScreenState extends State<ConnectScreen> {
           setState(() {
             _currentUser = userModel;
           });
-          
+
           // If connected, navigate to chat screen
-          if (userModel?.connectionStatus == 'connected' && userModel?.connectedTo != null) {
+          if (userModel?.connectionStatus == 'connected' &&
+              userModel?.connectedTo != null) {
             _navigateToChat(userModel!.connectedTo!);
           }
         }
@@ -81,23 +82,21 @@ class _ConnectScreenState extends State<ConnectScreen> {
   }
 
   void _navigateToAuth() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const AuthScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const AuthScreen()));
   }
 
   void _navigateToChat(String otherUserId) {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => ChatScreen(otherUserId: otherUserId),
-      ),
+      MaterialPageRoute(builder: (_) => ChatScreen(otherUserId: otherUserId)),
     );
   }
 
   Future<void> _findUserByUsername() async {
     final username = _usernameController.text.trim();
     if (username.isEmpty) return;
-    
+
     setState(() {
       _isSearching = true;
       _targetUser = null;
@@ -145,7 +144,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
 
   Future<void> _sendConnectionRequest() async {
     if (_targetUser == null || _currentUser == null) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -181,7 +180,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
 
   Future<void> _acceptConnectionRequest(UserModel requester) async {
     if (_currentUser == null) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -207,7 +206,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
 
   Future<void> _declineConnectionRequest(UserModel requester) async {
     if (_currentUser == null) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -254,10 +253,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _signOut,
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _signOut),
         ],
       ),
       body: SafeArea(
@@ -292,7 +288,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                   ),
                 ),
               const SizedBox(height: 24),
-              
+
               // Connection status
               if (_currentUser?.connectionStatus == 'pending')
                 Container(
@@ -316,9 +312,9 @@ class _ConnectScreenState extends State<ConnectScreen> {
                   ),
                 ),
               const SizedBox(height: 24),
-              
+
               // Incoming requests
-              if (_incomingRequests.isNotEmpty) ...[  
+              if (_incomingRequests.isNotEmpty) ...[
                 Text(
                   'Connection Requests',
                   style: AppConstants.subheadingStyle,
@@ -338,12 +334,17 @@ class _ConnectScreenState extends State<ConnectScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.check, color: Colors.green),
-                              onPressed: () => _acceptConnectionRequest(requester),
+                              icon: const Icon(
+                                Icons.check,
+                                color: Colors.green,
+                              ),
+                              onPressed: () =>
+                                  _acceptConnectionRequest(requester),
                             ),
                             IconButton(
                               icon: const Icon(Icons.close, color: Colors.red),
-                              onPressed: () => _declineConnectionRequest(requester),
+                              onPressed: () =>
+                                  _declineConnectionRequest(requester),
                             ),
                           ],
                         ),
@@ -353,9 +354,9 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 ),
                 const SizedBox(height: 24),
               ],
-              
+
               // Connect form
-              if (_currentUser?.connectionStatus == 'none') ...[  
+              if (_currentUser?.connectionStatus == 'none') ...[
                 Text(
                   AppConstants.connectTitle,
                   style: AppConstants.subheadingStyle,
@@ -392,7 +393,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Find user button
                       CustomButton(
                         text: 'Find User',
@@ -401,7 +402,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                         isOutlined: true,
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // Target user info
                       if (_targetUser != null)
                         Container(
@@ -433,7 +434,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                   ),
                 ),
               ],
-              
+
               // Error message
               if (_errorMessage.isNotEmpty)
                 Padding(

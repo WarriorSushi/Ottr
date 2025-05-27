@@ -7,7 +7,7 @@ import 'connect_screen.dart';
 
 /// Screen for setting up a unique username
 class UsernameScreen extends StatefulWidget {
-  const UsernameScreen({Key? key}) : super(key: key);
+  const UsernameScreen({super.key});
 
   @override
   State<UsernameScreen> createState() => _UsernameScreenState();
@@ -17,7 +17,7 @@ class _UsernameScreenState extends State<UsernameScreen> {
   final AuthService _authService = AuthService();
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _isChecking = false;
   bool _isAvailable = false;
@@ -32,7 +32,7 @@ class _UsernameScreenState extends State<UsernameScreen> {
   Future<void> _checkUsernameAvailability() async {
     final username = _usernameController.text.trim();
     if (username.isEmpty) return;
-    
+
     setState(() {
       _isChecking = true;
       _isAvailable = false;
@@ -126,7 +126,7 @@ class _UsernameScreenState extends State<UsernameScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Username field
                   TextFormField(
                     controller: _usernameController,
@@ -140,16 +140,11 @@ class _UsernameScreenState extends State<UsernameScreen> {
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : _isAvailable && _usernameController.text.isNotEmpty
-                              ? const Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                )
-                              : null,
+                          ? const Icon(Icons.check_circle, color: Colors.green)
+                          : null,
                     ),
                     onChanged: (_) {
                       setState(() {
@@ -177,7 +172,7 @@ class _UsernameScreenState extends State<UsernameScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Check availability button
                   CustomButton(
                     text: 'Check Availability',
@@ -186,7 +181,7 @@ class _UsernameScreenState extends State<UsernameScreen> {
                     isOutlined: true,
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Availability message
                   if (_isAvailable && _usernameController.text.isNotEmpty)
                     const Padding(
@@ -200,7 +195,7 @@ class _UsernameScreenState extends State<UsernameScreen> {
                         ),
                       ),
                     ),
-                  
+
                   // Error message
                   if (_errorMessage.isNotEmpty)
                     Padding(
@@ -214,7 +209,7 @@ class _UsernameScreenState extends State<UsernameScreen> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                  
+
                   // Submit button
                   CustomButton(
                     text: AppConstants.usernameSubmitButton,

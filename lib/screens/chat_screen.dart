@@ -13,7 +13,7 @@ import 'connect_screen.dart';
 class ChatScreen extends StatefulWidget {
   final String otherUserId;
 
-  const ChatScreen({Key? key, required this.otherUserId}) : super(key: key);
+  const ChatScreen({super.key, required this.otherUserId});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -60,7 +60,7 @@ class _ChatScreenState extends State<ChatScreen> {
           setState(() {
             _currentUser = userModel;
           });
-          
+
           // If disconnected, navigate back to connect screen
           if (userModel?.connectionStatus != 'connected') {
             _navigateToConnect();
@@ -84,7 +84,7 @@ class _ChatScreenState extends State<ChatScreen> {
           setState(() {
             _messages = messages;
           });
-          
+
           // Scroll to bottom when new message arrives
           if (_scrollController.hasClients) {
             _scrollController.animateTo(
@@ -105,15 +105,15 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _navigateToConnect() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const ConnectScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const ConnectScreen()));
   }
 
   Future<void> _sendMessage() async {
     final message = _messageController.text.trim();
     if (message.isEmpty || _currentUser == null || _otherUser == null) return;
-    
+
     setState(() {
       _isSending = true;
       _errorMessage = '';
@@ -142,17 +142,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _disconnect() async {
     if (_currentUser == null || _otherUser == null) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
     try {
-      await _userService.disconnect(
-        _currentUser!.uid,
-        _otherUser!.uid,
-      );
+      await _userService.disconnect(_currentUser!.uid, _otherUser!.uid);
 
       // Navigation will happen automatically due to the user stream listener
     } catch (e) {
@@ -219,7 +216,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             ),
-            
+
             // Error message
             if (_errorMessage.isNotEmpty)
               Container(
@@ -234,7 +231,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            
+
             // Messages list
             Expanded(
               child: _messages.isEmpty
@@ -250,18 +247,12 @@ class _ChatScreenState extends State<ChatScreen> {
                           const SizedBox(height: 16),
                           const Text(
                             'No messages yet',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
                           ),
                           const SizedBox(height: 8),
                           const Text(
                             'Start the conversation!',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                            ),
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
                           ),
                         ],
                       ),
@@ -276,7 +267,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         final senderUsername = isMe
                             ? _currentUser?.username ?? 'You'
                             : _otherUser?.username ?? 'Other';
-                        
+
                         return MessageBubble(
                           message: message,
                           isMe: isMe,
@@ -285,7 +276,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       },
                     ),
             ),
-            
+
             // Message input
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -342,10 +333,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ),
                                 ),
                               )
-                            : const Icon(
-                                Icons.send,
-                                color: Colors.white,
-                              ),
+                            : const Icon(Icons.send, color: Colors.white),
                       ),
                     ),
                   ),
