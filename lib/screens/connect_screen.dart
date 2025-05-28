@@ -269,48 +269,104 @@ class _ConnectScreenState extends State<ConnectScreen> {
       });
     }
   }
+  
+  // Helper method to get status color based on connection status
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'none':
+        return Colors.grey;
+      case 'pending':
+        return Colors.orange;
+      case 'connected':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+  
+  // Helper method to get formatted status text
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'none':
+        return 'Not Connected';
+      case 'pending':
+        return 'Pending';
+      case 'connected':
+        return 'Connected';
+      default:
+        return status.toUpperCase();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppConstants.lightColor,
       appBar: AppBar(
-        title: const Text('Ottr'),
-        backgroundColor: AppConstants.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
+        title: const Text('Connect'),
         actions: [
-          IconButton(icon: const Icon(Icons.logout), onPressed: _signOut),
+          TextButton.icon(
+            icon: const Icon(Icons.logout, color: Colors.red),
+            label: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+            onPressed: _signOut,
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+          ),
         ],
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // User info
               if (_currentUser != null)
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Your Username: ${_currentUser!.username}',
-                          style: AppConstants.subheadingStyle,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Status: ${_currentUser!.connectionStatus}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ],
+                Container(
+                  width: double.infinity,
+                  child: Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Your Username: ${_currentUser!.username}',
+                            style: AppConstants.subheadingStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Status: ',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(_currentUser!.connectionStatus).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  _getStatusText(_currentUser!.connectionStatus),
+                                  style: TextStyle(
+                                    color: _getStatusColor(_currentUser!.connectionStatus),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -392,10 +448,10 @@ class _ConnectScreenState extends State<ConnectScreen> {
 
               // Facts box
               Container(
-                margin: const EdgeInsets.symmetric(vertical: 16),
+                margin: const EdgeInsets.symmetric(vertical: 8),
                 child: const FactsBox(
                   facts: AppConstants.animalLoveFacts,
-                  height: 70,
+                  height: 50, // Smaller height
                   interval: Duration(seconds: 4),
                 ),
               ),

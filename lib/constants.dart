@@ -5,13 +5,13 @@ class AppConstants {
   // Colors
   static const Color primaryColor = Color(0xFF7EBEA0); // Darker Mint
   static const Color accentColor = Color(0xFFE6B394); // Darker Peach
-  static const Color lightColor = Color(0xFFF5EFE9); // Slightly darker light peach
+  static const Color lightColor = Color(
+    0xFFF5EFE9,
+  ); // Slightly darker light peach
   static const Color darkColor = Color(0xFF1A1E1F); // Darker Gray for text
   static const Color errorColor = Color(0xFFE57F86); // Darker Red
   static const Color successColor = Color(0xFF9AA8D5); // Darker Blue
-  static const Color borderColor = Color(
-    0xFFC5D6A2,
-  ); // Darker Green Border
+  static const Color borderColor = Color(0xFFC5D6A2); // Darker Green Border
   static const Color charcoalColor = Color(
     0xFF222222,
   ); // Darker Charcoal for text
@@ -46,10 +46,9 @@ class AppConstants {
 
   // Text Styles
   static const TextStyle headingStyle = TextStyle(
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: FontWeight.bold,
     color: darkColor,
-    letterSpacing: 0.5,
   );
 
   static const TextStyle subheadingStyle = TextStyle(

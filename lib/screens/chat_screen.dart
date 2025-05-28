@@ -140,6 +140,34 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _showDisconnectConfirmation() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Disconnect'),
+          content: const Text('Are you sure you want to disconnect from this chat?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Yes', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _disconnect();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _disconnect() async {
     if (_currentUser == null || _otherUser == null) return;
 
@@ -155,6 +183,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
+        _isLoading = false;
       });
     } finally {
       setState(() {
@@ -171,9 +200,6 @@ class _ChatScreenState extends State<ChatScreen> {
         title: _otherUser != null
             ? Text(_otherUser!.username)
             : const Text('Chat'),
-        backgroundColor: AppConstants.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
         actions: [
           _isLoading
               ? const Padding(
@@ -187,9 +213,31 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                 )
-              : IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: _disconnect,
+              : PopupMenuButton<String>(
+                  icon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('More', style: TextStyle(fontSize: 14)),
+                      Icon(Icons.arrow_drop_down),
+                    ],
+                  ),
+                  onSelected: (value) {
+                    if (value == 'disconnect') {
+                      _showDisconnectConfirmation();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(
+                      value: 'disconnect',
+                      child: Row(
+                        children: [
+                          Icon(Icons.link_off, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Disconnect', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
         ],
       ),

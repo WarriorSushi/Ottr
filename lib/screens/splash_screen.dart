@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
 import 'auth_screen.dart';
 import 'username_screen.dart';
 import 'connect_screen.dart';
+import 'onboarding_screen.dart';
 
 /// Splash screen shown when the app starts
 class SplashScreen extends StatefulWidget {
@@ -28,6 +30,18 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       // Add a small delay to ensure any pending auth state changes are processed
       await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Check if onboarding has been completed
+      final prefs = await SharedPreferences.getInstance();
+      final bool onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
+      
+      if (!onboardingComplete && mounted) {
+        // Show onboarding screen if it's the first launch
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        );
+        return;
+      }
       
       // Check if user is already logged in
       User? user = FirebaseAuth.instance.currentUser;

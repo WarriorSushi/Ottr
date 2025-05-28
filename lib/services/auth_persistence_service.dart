@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 
 /// Service for handling authentication persistence between app sessions
 class AuthPersistenceService {
@@ -22,7 +23,7 @@ class AuthPersistenceService {
       await prefs.setString(_authTokenKey, authToken);
     }
     
-    print('Auth data saved to persistent storage: $userId');
+    debugPrint('Auth data saved to persistent storage: $userId');
   }
   
   // Get saved user ID
@@ -51,7 +52,7 @@ class AuthPersistenceService {
     await prefs.remove(_emailKey);
     await prefs.remove(_authTokenKey);
     
-    print('Auth data cleared from persistent storage');
+    debugPrint('Auth data cleared from persistent storage');
   }
   
   // Check if user is authenticated based on stored data
