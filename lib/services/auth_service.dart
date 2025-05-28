@@ -91,16 +91,36 @@ class AuthService {
   }
 
   // Sign in with email and password
-  Future<UserCredential> signInWithEmailAndPassword(
+  Future<User?> signInWithEmailAndPassword(
       String email, String password) async {
     try {
+      print('Attempting to sign in user with email: $email');
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return result;
+      return result.user;
+    } on FirebaseAuthException catch (e) {
+      // Handle Firebase-specific errors
+      print('FirebaseAuthException: ${e.code} - ${e.message}');
+      throw e;
     } catch (e) {
-      rethrow;
+      // Handle the PigeonUserDetails error specifically
+      print('Sign in error type: ${e.runtimeType}');
+      print('Sign in error message: ${e.toString()}');
+      
+      if (e.toString().contains('PigeonUserDetails') || 
+          e.toString().contains('List<Object?>')) {
+        // The user might have been authenticated despite the error
+        // Try to get the current user
+        await Future.delayed(const Duration(milliseconds: 1000));
+        User? user = _auth.currentUser;
+        if (user != null) {
+          print('Retrieved current user despite error: ${user.uid}');
+          return user;
+        }
+      }
+      throw e;
     }
   }
 

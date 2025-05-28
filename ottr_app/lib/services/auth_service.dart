@@ -91,7 +91,7 @@ class AuthService {
   }
 
   // Sign in with email and password
-  Future<UserCredential> signInWithEmailAndPassword(
+  Future<User?> signInWithEmailAndPassword(
       String email, String password) async {
     try {
       print('Attempting to sign in user with email: $email');
@@ -103,7 +103,7 @@ class AuthService {
       
       // Add a small delay to ensure Firebase Auth state is fully updated
       await Future.delayed(const Duration(milliseconds: 500));
-      return result;
+      return result.user;
     } on FirebaseAuthException catch (e) {
       // Handle Firebase-specific errors
       print('FirebaseAuthException: ${e.code} - ${e.message}');
@@ -121,17 +121,7 @@ class AuthService {
         User? user = _auth.currentUser;
         if (user != null) {
           print('Retrieved current user despite error: ${user.uid}');
-          // Since we can't create a UserCredential directly, we'll try to sign in again silently
-          try {
-            // Try to get the stored credential from Firebase Auth
-            return await _auth.signInWithEmailAndPassword(
-              email: email,
-              password: password
-            );
-          } catch (innerError) {
-            print('Failed to re-authenticate: $innerError');
-            // Continue with the original error
-          }
+          return user;
         }
       }
       throw e;

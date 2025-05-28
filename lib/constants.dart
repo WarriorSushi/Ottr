@@ -3,35 +3,35 @@ import 'package:flutter/material.dart';
 /// App-wide constants including colors, text styles, and string resources
 class AppConstants {
   // Colors
-  static const Color primaryColor = Color(0xFFB5EAD7); // Pastel Mint
-  static const Color accentColor = Color(0xFFFFDAC1); // Pastel Peach
-  static const Color lightColor = Color(0xFFFFF9F5); // Very Light Peach
-  static const Color darkColor = Color(0xFF2D3436); // Dark Gray (kept for text)
-  static const Color errorColor = Color(0xFFFF9AA2); // Pastel Red
-  static const Color successColor = Color(0xFFC7CEEA); // Pastel Blue
+  static const Color primaryColor = Color(0xFF7EBEA0); // Darker Mint
+  static const Color accentColor = Color(0xFFE6B394); // Darker Peach
+  static const Color lightColor = Color(0xFFF5EFE9); // Slightly darker light peach
+  static const Color darkColor = Color(0xFF1A1E1F); // Darker Gray for text
+  static const Color errorColor = Color(0xFFE57F86); // Darker Red
+  static const Color successColor = Color(0xFF9AA8D5); // Darker Blue
   static const Color borderColor = Color(
-    0xFFE2F0CB,
-  ); // Light Pastel Green Border
+    0xFFC5D6A2,
+  ); // Darker Green Border
   static const Color charcoalColor = Color(
-    0xFF333333,
-  ); // Charcoal for text on light backgrounds
+    0xFF222222,
+  ); // Darker Charcoal for text
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFFB5EAD7), Color(0xFFC7CEEA)],
+    colors: [Color(0xFF7EBEA0), Color(0xFF9AA8D5)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient backgroundGradient = LinearGradient(
-    colors: [Color(0xFFFFF9F5), Color(0xFFFFDAC1), Color(0xFFB5EAD7)],
+    colors: [Color(0xFFF5EFE9), Color(0xFFE6B394), Color(0xFF7EBEA0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     stops: [0.1, 0.5, 0.9],
   );
 
   static const LinearGradient buttonGradient = LinearGradient(
-    colors: [Color(0xFFC7CEEA), Color(0xFFB5EAD7)],
+    colors: [Color(0xFF9AA8D5), Color(0xFF7EBEA0)],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );

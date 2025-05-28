@@ -45,11 +45,15 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       if (_isLogin) {
         // Login
-        await _authService.signInWithEmailAndPassword(_email, _password);
+        User? currentUser = await _authService.signInWithEmailAndPassword(_email, _password);
+        if (currentUser == null) {
+          throw FirebaseAuthException(
+            code: 'login-failed',
+            message: 'Failed to sign in to account',
+          );
+        }
         
-        // Check if user has a username set
-        User? currentUser = FirebaseAuth.instance.currentUser;
-        if (currentUser != null && mounted) {
+        if (mounted) {
           // Add a small delay to ensure Firebase Auth state is fully updated
           await Future.delayed(const Duration(milliseconds: 500));
           

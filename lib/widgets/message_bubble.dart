@@ -18,9 +18,9 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define the peach-pink gradient for sender bubbles
+    // Define the light green gradient for sender bubbles
     final senderGradient = const LinearGradient(
-      colors: [Color(0xFFFDD6BA), Color(0xFFFFB6C1)],
+      colors: [Color(0xFFB5EAD7), Color(0xFF8FD5A6)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
@@ -64,7 +64,7 @@ class MessageBubble extends StatelessWidget {
                 Text(
                   message.message,
                   style: TextStyle(
-                    color: isMe ? Colors.white : AppConstants.darkColor,
+                    color: AppConstants.darkColor, // Black text for both sender and receiver
                     fontSize: 16,
                     fontWeight: FontWeight.w400, // Regular weight for message text
                     height: 1.4, // Slightly increased line height for readability
@@ -74,7 +74,7 @@ class MessageBubble extends StatelessWidget {
                 Text(
                   timeago.format(message.timestamp),
                   style: TextStyle(
-                    color: isMe ? Colors.white.withOpacity(0.7) : const Color(0xFF999999),
+                    color: const Color(0xFF666666), // Darker gray for timestamps
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                   ),
