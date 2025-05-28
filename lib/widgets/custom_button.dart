@@ -62,9 +62,12 @@ class _CustomButtonState extends State<CustomButton> with SingleTickerProviderSt
                     ? null
                     : AppConstants.primaryGradient,
                 borderRadius: BorderRadius.circular(16), // Increased rounded corners
-                border: widget.isOutlined
-                    ? Border.all(color: AppConstants.primaryColor, width: 2)
-                    : null,
+                border: Border.all(
+                  color: widget.isOutlined
+                      ? AppConstants.primaryColor
+                      : AppConstants.borderColor, // Black border for visibility
+                  width: widget.isOutlined ? 2 : 1,
+                ),
                 boxShadow: widget.isOutlined
                     ? []
                     : [AppConstants.defaultShadow],
@@ -89,7 +92,8 @@ class _CustomButtonState extends State<CustomButton> with SingleTickerProviderSt
                         : Text(
                             widget.text,
                             style: AppConstants.buttonTextStyle.copyWith(
-                              color: widget.isOutlined ? AppConstants.primaryColor : Colors.white,
+                              color: AppConstants.charcoalColor, // Consistent charcoal color for all text
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                   ),

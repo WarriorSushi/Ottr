@@ -135,4 +135,16 @@ class UserService {
             .map((doc) => UserModel.fromMap(doc.data(), doc.id))
             .toList());
   }
+  
+  // Update user connection status
+  Future<void> updateUserConnectionStatus(String userId, String status) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'connectionStatus': status,
+        'connectedTo': null,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

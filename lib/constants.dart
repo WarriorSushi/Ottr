@@ -9,6 +9,8 @@ class AppConstants {
   static const Color darkColor = Color(0xFF293241); // Dark Gray (kept for text)
   static const Color errorColor = Color(0xFFEE6C4D); // Coral Red
   static const Color lavenderColor = Color(0xFFE7E5F1); // Soft Lavender
+  static const Color borderColor = Color(0xFF000000); // Black for borders
+  static const Color charcoalColor = Color(0xFF333333); // Charcoal for text on light backgrounds
   
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
@@ -35,31 +37,31 @@ class AppConstants {
   static const TextStyle headingStyle = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w600, // Semi-bold for headlines
-    color: darkColor,
+    color: charcoalColor,
   );
   
   static const TextStyle subheadingStyle = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w500, // Medium for subtle hierarchy
-    color: darkColor,
+    color: charcoalColor,
   );
   
   static const TextStyle bodyStyle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w400, // Regular for body text
-    color: darkColor,
+    color: charcoalColor,
   );
   
   static const TextStyle buttonTextStyle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w600, // Semi-bold for buttons
-    color: Colors.white,
+    color: charcoalColor,
   );
   
   static TextStyle taglineStyle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w400, // Regular for tagline
-    color: darkColor.withOpacity(0.8), // Using withOpacity instead of opacity property
+    color: charcoalColor,
     letterSpacing: 0.5,
     height: 1.5,
   );
@@ -94,6 +96,7 @@ class AppConstants {
   static const String connectTitle = 'Connect with Someone';
   static const String connectHint = 'Enter their username';
   static const String connectButton = 'Send Connection Request';
+  static const String cancelRequestButton = 'Cancel Request';
   static const String disconnectButton = 'Disconnect';
   static const String pendingStatus = 'Connection request pending...';
   static const String connectedStatus = 'Connected with ';
@@ -106,6 +109,31 @@ class AppConstants {
   static const String userNotFound = 'Username not found - check spelling';
   static const String userUnavailable = 'User is currently connected to someone else';
   static const String requestSent = 'Connection request sent! Waiting for response...';
+  static const String requestCancelled = 'Connection request cancelled.';
   static const String alreadyConnected = "You're already connected to someone. Disconnect first.";
   static const String networkError = 'Please check your internet connection';
+  
+  // Animal Love Facts
+  static const List<String> animalLoveFacts = [
+    "Otters hold hands while sleeping to stay together.",
+    "Penguins propose with pebbles.",
+    "Elephants comfort upset family members by stroking them.",
+    "Swans mate for life, symbolizing loyalty.",
+    "Beavers raise young together and share family duties.",
+    "Puffins gently rub beaks (\"billing\") to bond.",
+    "Wolves protect and nurture their pack as family.",
+    "Gibbons sing romantic duets to strengthen bonds.",
+    "Albatrosses perform synchronized dances with lifelong partners.",
+    "Foxes lovingly groom and play with their cubs.",
+    "Prairie dogs greet family with tiny kisses.",
+    "Dolphins stay close and care for injured pod members.",
+    "Parrots bond for life, cuddling and grooming each other.",
+    "Barn owls cuddle and groom regularly to reinforce affection.",
+    "Lions nuzzle and rub heads to maintain pride bonds.",
+    "Squirrels cuddle tightly together in cold weather.",
+    "Manatees embrace gently to show affection.",
+    "Meerkats babysit each other's pups as a community.",
+    "Cows form strong bonds and have best friends.",
+    "Emperor penguins share parenting equally",
+  ];
 }

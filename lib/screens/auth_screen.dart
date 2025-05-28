@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../constants.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_button.dart';
+import '../widgets/facts_box.dart';
 import 'username_screen.dart';
 
 /// Authentication screen for login and registration
@@ -156,7 +157,16 @@ class _AuthScreenState extends State<AuthScreen> {
                         height: 120,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+                    
+                    // Facts box
+                    const FactsBox(
+                      facts: AppConstants.animalLoveFacts,
+                      height: 70,
+                      interval: Duration(seconds: 4),
+                    ),
+                    const SizedBox(height: 16),
+                    
                     Text(
                       _isLogin ? 'Welcome Back' : 'Create Account',
                       style: AppConstants.headingStyle,

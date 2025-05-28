@@ -5,6 +5,7 @@ import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../widgets/custom_button.dart';
+import '../widgets/facts_box.dart';
 import 'auth_screen.dart';
 import 'chat_screen.dart';
 
@@ -177,6 +178,32 @@ class _ConnectScreenState extends State<ConnectScreen> {
       });
     }
   }
+  
+  Future<void> _cancelConnectionRequest() async {
+    if (_currentUser == null) return;
+    
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+    
+    try {
+      // Reset connection status to 'none' for current user
+      await _userService.updateUserConnectionStatus(_currentUser!.uid, 'none');
+      
+      setState(() {
+        _errorMessage = AppConstants.requestCancelled;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   Future<void> _acceptConnectionRequest(UserModel requester) async {
     if (_currentUser == null) return;
@@ -290,7 +317,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
               const SizedBox(height: 24),
 
               // Connection status
-              if (_currentUser?.connectionStatus == 'pending')
+              if (_currentUser?.connectionStatus == 'pending') ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -298,19 +325,27 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.amber),
                   ),
-                  child: const Row(
+                  child: Column(
                     children: [
-                      Icon(Icons.hourglass_top, color: Colors.amber),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          AppConstants.pendingStatus,
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        AppConstants.pendingStatus,
+                        style: const TextStyle(
+                          fontStyle: FontStyle.italic,
+                          fontSize: 16,
+                          color: AppConstants.charcoalColor,
                         ),
+                      ),
+                      const SizedBox(height: 16),
+                      CustomButton(
+                        text: AppConstants.cancelRequestButton,
+                        onPressed: _cancelConnectionRequest,
+                        isLoading: _isLoading,
+                        isOutlined: true,
                       ),
                     ],
                   ),
                 ),
+              ],
               const SizedBox(height: 24),
 
               // Incoming requests
@@ -354,6 +389,16 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 ),
                 const SizedBox(height: 24),
               ],
+
+              // Facts box
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                child: const FactsBox(
+                  facts: AppConstants.animalLoveFacts,
+                  height: 70,
+                  interval: Duration(seconds: 4),
+                ),
+              ),
 
               // Connect form
               if (_currentUser?.connectionStatus == 'none') ...[
