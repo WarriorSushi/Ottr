@@ -24,34 +24,67 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
-  void navigateToNextScreen() async {
-    // Check if user is already logged in
-    User? user = FirebaseAuth.instance.currentUser;
+  Future<void> navigateToNextScreen() async {
+    try {
+      // Add a small delay to ensure any pending auth state changes are processed
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Check if user is already logged in
+      User? user = FirebaseAuth.instance.currentUser;
 
-    if (user != null) {
-      // User is logged in, check if username is set
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      if (user != null) {
+        // Add a small delay to ensure the user document is available
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        // User is logged in, check if username is set
+        try {
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
 
-      if (userDoc.exists && userDoc.data()?['username'] != null) {
-        // Username is set, navigate to connect screen
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const ConnectScreen()),
-          );
+          if (!mounted) return;
+          
+          if (!userDoc.exists) {
+            // User document doesn't exist, navigate to username screen
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const UsernameScreen()),
+            );
+            return;
+          }
+          
+          final userData = userDoc.data();
+          if (userData == null || userData['username'] == null) {
+            // Username is not set, navigate to username screen
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const UsernameScreen()),
+            );
+          } else {
+            // Username is set, navigate to connect screen
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const ConnectScreen()),
+            );
+          }
+        } catch (e) {
+          print('Error fetching user document: $e');
+          // If there's an error, navigate to auth screen to be safe
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const AuthScreen()),
+            );
+          }
         }
       } else {
-        // Username is not set, navigate to username screen
+        // User is not logged in, navigate to auth screen
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const UsernameScreen()),
+            MaterialPageRoute(builder: (_) => const AuthScreen()),
           );
         }
       }
-    } else {
-      // User is not logged in, navigate to auth screen
+    } catch (e) {
+      print('Error in splash screen navigation: $e');
+      // If any error occurs, default to auth screen
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const AuthScreen()),

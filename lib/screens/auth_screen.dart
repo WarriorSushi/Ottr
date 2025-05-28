@@ -44,55 +44,22 @@ class _AuthScreenState extends State<AuthScreen> {
       if (_isLogin) {
         // Login
         await _authService.signInWithEmailAndPassword(_email, _password);
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const UsernameScreen()),
-          );
-        }
       } else {
         // Register
-        try {
-          User? user = await _authService.registerWithEmailAndPassword(_email, _password);
-          if (user != null && mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const UsernameScreen()),
-            );
-          }
-        } catch (e) {
-          // If registration fails with type error but Firebase actually created the account,
-          // we can try to sign in with the same credentials
-          if (e.toString().contains('PigeonUserDetails') || 
-              e.toString().contains('List<Object?>')) {
-            // Wait a moment and check if user is now authenticated
-            await Future.delayed(const Duration(milliseconds: 500));
-            if (FirebaseAuth.instance.currentUser != null && mounted) {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const UsernameScreen()),
-              );
-              return;
-            }
-            
-            // If not, try explicit sign in
-            try {
-              await _authService.signInWithEmailAndPassword(_email, _password);
-              if (mounted) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const UsernameScreen()),
-                );
-              }
-              return;
-            } catch (_) {
-              // If sign-in also fails, show a user-friendly error
-              setState(() {
-                _errorMessage = 'Registration issue. Please try again or restart the app.';
-                _isLoading = false;
-              });
-            }
-          } else {
-            // For other errors, rethrow to be caught by the outer catch block
-            rethrow;
-          }
+        User? user = await _authService.registerWithEmailAndPassword(_email, _password);
+        if (user == null) {
+          throw FirebaseAuthException(
+            code: 'registration-failed',
+            message: 'Failed to create user account',
+          );
         }
+      }
+      
+      // If we get here, authentication was successful
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const UsernameScreen()),
+        );
       }
     } on FirebaseAuthException catch (e) {
       String message = 'An error occurred';
@@ -100,26 +67,25 @@ class _AuthScreenState extends State<AuthScreen> {
       if (e.code == 'user-not-found' || e.code == 'wrong-password') {
         message = 'Invalid email or password';
       } else if (e.code == 'email-already-in-use') {
-        message = 'Email is already in use';
+        message = 'An account already exists with this email';
       } else if (e.code == 'weak-password') {
         message = 'Password is too weak';
       } else if (e.code == 'invalid-email') {
         message = 'Invalid email address';
+      } else if (e.code == 'registration-failed') {
+        message = 'Failed to create account. Please try again.';
       }
 
       setState(() {
         _errorMessage = message;
+        _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = 'An unexpected error occurred. Please try again.';
+        _isLoading = false;
       });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      print('Authentication error: $e');
     }
   }
 
@@ -314,10 +280,10 @@ class _AuthScreenState extends State<AuthScreen> {
                             ? '${AppConstants.noAccountText}Register'
                             : '${AppConstants.haveAccountText}Login',
                         style: TextStyle(
-                          color: AppConstants.primaryColor,
+                          color: Colors.green[800], // Dark green color
                           fontWeight: FontWeight.w500,
                           decoration: TextDecoration.underline,
-                          decorationColor: AppConstants.accentColor,
+                          decorationColor: Colors.green[800],
                         ),
                       ),
                     ),

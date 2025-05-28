@@ -32,6 +32,9 @@ class AuthService {
         password: password,
       );
       print('Registration successful: ${result.user?.uid}');
+      
+      // Add a small delay to ensure Firebase Auth state is fully updated
+      await Future.delayed(const Duration(milliseconds: 500));
       return result.user;
     } on FirebaseAuthException catch (e) {
       // Handle Firebase-specific errors
