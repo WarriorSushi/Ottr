@@ -1,22 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import 'constants.dart';
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
+import 'screens/notification_settings_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/notification_test_screen.dart';
 import 'services/auth_service.dart';
 import 'services/user_service.dart';
+import 'services/fcm_service.dart';
+import 'services/background_message_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const OttrApp());
+  
+  try {
+    // Initialize Firebase
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    
+    // Set background message handler - CRITICAL FOR BACKGROUND NOTIFICATIONS
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    
+    runApp(const OttrApp());
+    
+  } catch (e) {
+    debugPrint('❌ Error initializing app: $e');
+    runApp(const OttrApp()); // Still run the app even if FCM fails
+  }
 }
 
-class OttrApp extends StatelessWidget {
+class OttrApp extends StatefulWidget {
   const OttrApp({Key? key}) : super(key: key);
+
+  @override
+  State<OttrApp> createState() => _OttrAppState();
+}
+
+class _OttrAppState extends State<OttrApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize FCM after the app is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeFCM();
+    });
+  }
+
+  Future<void> _initializeFCM() async {
+    try {
+      // Initialize FCM service
+      final fcmInitialized = await FCMService.initialize();
+      if (!fcmInitialized) {
+        debugPrint('⚠️ FCM initialization failed, but app will continue');
+      } else {
+        debugPrint('✅ FCM initialized successfully');
+      }
+    } catch (e) {
+      debugPrint('❌ Error initializing FCM: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +77,7 @@ class OttrApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+      navigatorKey: NavigatorKey.key, // CRITICAL: Global navigation key for FCM
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -121,6 +168,11 @@ class OttrApp extends StatelessWidget {
         ),
       ),
       home: const SplashScreen(),
+      routes: {
+        NotificationSettingsScreen.routeName: (context) => const NotificationSettingsScreen(),
+        SettingsScreen.routeName: (context) => const SettingsScreen(),
+        NotificationTestScreen.routeName: (context) => const NotificationTestScreen(),
+      },
     ),
     );
   }

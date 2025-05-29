@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.ottr.ottr_app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34 // Updated for FCM compatibility
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -23,14 +23,12 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.ottr.ottr_app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 21 // Ensuring compatibility with Firebase
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 34 // Updated for FCM compatibility
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true // Added for FCM
     }
 
     buildTypes {
@@ -44,4 +42,12 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // FCM Dependencies
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("androidx.work:work-runtime:2.8.1")
+    implementation("androidx.multidex:multidex:2.0.1")
 }

@@ -8,6 +8,7 @@ import '../widgets/custom_button.dart';
 import '../widgets/facts_box.dart';
 import 'auth_screen.dart';
 import 'chat_screen.dart';
+import 'settings_screen.dart';
 
 /// Screen for connecting with another user
 class ConnectScreen extends StatefulWidget {
@@ -305,6 +306,15 @@ class _ConnectScreenState extends State<ConnectScreen> {
       appBar: AppBar(
         title: const Text('Connect'),
         actions: [
+          // Settings button
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.pushNamed(context, SettingsScreen.routeName);
+            },
+            tooltip: 'Settings',
+          ),
+          // Sign out button
           TextButton.icon(
             icon: const Icon(Icons.logout, color: Colors.red),
             label: const Text('Sign Out', style: TextStyle(color: Colors.red)),

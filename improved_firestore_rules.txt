@@ -1,81 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-    
-    // Users collection - core user data
-    match /users/{userId} {
-      // Any authenticated user can read any user's profile for discovery
-      // WARNING: This makes ALL fields in the user document readable by all users
-      allow read: if isAuthenticated();
-      
-      // Only the owner can write to their own document
-      // CLIENT-SIDE RESPONSIBILITY: Your app code must correctly manage:
-      // 1. Setting connectionStatus and connectedTo during connection flows
-      // 2. Validating the other user's status before connecting
-      // 3. Handling connection state consistency between users
-      allow write: if isOwner(userId);
-    }
-    
-    // Messages collection - for chat conversations
-    match /messages/{conversationId} {
-      // Extract UIDs from the conversation ID (expected format: uid1_uid2)
-      let uids = conversationId.split('_');
-      
-      // Helper function: Is the current user a participant in this conversation?
-      function isChatParticipant() {
-        return isAuthenticated() && uids.size() == 2 && 
-               (request.auth.uid == uids[0] || request.auth.uid == uids[1]);
-      }
-      
-      // Helper function: Are the users in this conversation mutually connected?
-      // This is the key security check for messaging
-      function areChatParticipantsConnected() {
-        if (!isAuthenticated() || uids.size() != 2) {
-          return false;
-        }
-        
-        let user1Id = uids[0];
-        let user2Id = uids[1];
-        let user1Data = get(/databases/$(database)/documents/users/$(user1Id)).data;
-        let user2Data = get(/databases/$(database)/documents/users/$(user2Id)).data;
-        
-        return user1Data.connectionStatus == 'connected' && user1Data.connectedTo == user2Id &&
-               user2Data.connectionStatus == 'connected' && user2Data.connectedTo == user1Id;
-      }
-      
-      // Allow participants of a valid connection to read/write the conversation document
-      allow read, write: if isChatParticipant() && areChatParticipantsConnected();
-      
-      // Messages subcollection
-      match /messages/{messageId} {
-        // Allow reading messages if user is a participant in a valid connection
-        allow read: if isChatParticipant() && areChatParticipantsConnected();
-        
-        // Allow creating messages if:
-        // 1. User is a participant in a valid connection
-        // 2. User is the sender of the message
-        // 3. Message has the required fields (text, timestamp)
-        allow create: if isChatParticipant() && areChatParticipantsConnected() &&
-                      request.resource.data.senderId == request.auth.uid &&
-                      request.resource.data.text is string &&
-                      request.resource.data.timestamp == request.time;
-        
-        // Messages are immutable once sent
-        allow update, delete: if false;
-      }
-    }
-    
-    // Default deny for all other collections
+    // Allow read and write access to authenticated users during development
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if request.auth != null;
     }
   }
 }

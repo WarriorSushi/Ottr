@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
+import 'fcm_service.dart';
 
 /// Service for managing user data and connections
 class UserService extends ChangeNotifier {
@@ -47,6 +48,9 @@ class UserService extends ChangeNotifier {
     if (user != null) {
       await loadUserProfile(user.uid);
       _setupUserListener(user.uid);
+      
+      // Update FCM token when initializing service
+      await updateFCMToken();
     }
     
     // Listen to auth state changes
@@ -83,6 +87,12 @@ class UserService extends ChangeNotifier {
       if (doc.exists && doc.data() != null) {
         _currentUser = UserModel.fromMap(doc.data()!, doc.id);
         print('User profile loaded successfully: ${_currentUser!.username}');
+        
+        // Check if FCM token needs to be updated
+        if (!_currentUser!.hasValidFCMToken) {
+          print('FCM token missing or expired, updating...');
+          await updateFCMToken();
+        }
       } else {
         print('User document not found, creating minimal profile...');
         // Create minimal profile for authenticated user without Firestore doc
@@ -213,6 +223,67 @@ class UserService extends ChangeNotifier {
     }
   }
 
+  // Helper method to prepare and send connection notifications
+  Future<void> _sendConnectionNotification(
+    String senderId,
+    String receiverId,
+    String notificationType,
+    {String? additionalMessage}
+  ) async {
+    try {
+      // Get receiver's FCM token to send notification
+      final receiverDoc = await _firestore.collection('users').doc(receiverId).get();
+      if (receiverDoc.exists && receiverDoc.data() != null) {
+        final receiverData = receiverDoc.data()!;
+        final fcmToken = receiverData['fcmToken'] as String?;
+        final notificationsEnabled = receiverData['notificationsEnabled'] as bool? ?? true;
+        final notificationPrefs = receiverData['notificationPreferences'] as Map<String, dynamic>?;
+        
+        // Check if receiver has enabled connection notifications
+        final connectionsEnabled = notificationPrefs?['connections'] as bool? ?? true;
+        
+        if (fcmToken != null && notificationsEnabled && connectionsEnabled) {
+          // Get sender's username for the notification
+          final senderDoc = await _firestore.collection('users').doc(senderId).get();
+          String senderName = 'Someone';
+          if (senderDoc.exists && senderDoc.data() != null) {
+            senderName = senderDoc.data()!['username'] as String? ?? 'Someone';
+          }
+          
+          String title = '';
+          String body = '';
+          
+          switch (notificationType) {
+            case 'connection_request':
+              title = 'New Connection Request';
+              body = '$senderName wants to connect with you';
+              break;
+            case 'connection_accepted':
+              title = 'Connection Accepted';
+              body = '$senderName accepted your connection request';
+              break;
+            case 'connection_disconnected':
+              title = 'Connection Ended';
+              body = '$senderName has disconnected';
+              break;
+            default:
+              title = 'Ottr Notification';
+              body = additionalMessage ?? 'You have a new notification';
+          }
+          
+          // In a production app, this would be handled by a Cloud Function
+          // For now, we'll just log that a notification would be sent
+          print('Would send FCM notification to $receiverId with token: ${fcmToken.substring(0, 10)}...');
+          print('Notification type: $notificationType');
+          print('Notification content: $title - $body');
+        }
+      }
+    } catch (e) {
+      // Don't let notification errors affect the main operation
+      print('Error preparing connection notification: $e');
+    }
+  }
+
   // Send connection request
   Future<void> sendConnectionRequest(String currentUserId, String targetUserId) async {
     try {
@@ -232,6 +303,13 @@ class UserService extends ChangeNotifier {
         'connectedTo': targetUserId,
         'connectionStatus': 'pending',
       });
+      
+      // Send notification to target user about the connection request
+      await _sendConnectionNotification(
+        currentUserId,
+        targetUserId,
+        'connection_request',
+      );
     } catch (e) {
       rethrow;
     }
@@ -240,6 +318,18 @@ class UserService extends ChangeNotifier {
   // Accept connection request
   Future<void> acceptConnectionRequest(String currentUserId, String requesterId) async {
     try {
+      // Check if requester is still pending
+      DocumentSnapshot requesterDoc = await _firestore.collection('users').doc(requesterId).get();
+      if (!requesterDoc.exists) {
+        throw Exception('User not found');
+      }
+      
+      Map<String, dynamic> requesterData = requesterDoc.data() as Map<String, dynamic>;
+      if (requesterData['connectionStatus'] != 'pending' || 
+          requesterData['connectedTo'] != currentUserId) {
+        throw Exception('No pending request from this user');
+      }
+      
       // Update current user's status
       await _firestore.collection('users').doc(currentUserId).update({
         'connectedTo': requesterId,
@@ -261,6 +351,13 @@ class UserService extends ChangeNotifier {
         'participants': [currentUserId, requesterId],
         'lastActivity': FieldValue.serverTimestamp(),
       });
+      
+      // Send notification to requester that their connection request was accepted
+      await _sendConnectionNotification(
+        currentUserId,
+        requesterId,
+        'connection_accepted',
+      );
     } catch (e) {
       rethrow;
     }
@@ -293,6 +390,13 @@ class UserService extends ChangeNotifier {
         'connectedTo': null,
         'connectionStatus': 'none',
       });
+      
+      // Send notification to the other user about the disconnection
+      await _sendConnectionNotification(
+        currentUserId,
+        connectedUserId,
+        'connection_disconnected',
+      );
     } catch (e) {
       rethrow;
     }
@@ -349,10 +453,18 @@ class UserService extends ChangeNotifier {
     });
   }
 
-  void _clearUserData() {
+  void _clearUserData() async {
     // Cancel all Firestore listeners
     _userSubscription?.cancel();
     _userSubscription = null;
+    
+    // Dispose FCM resources
+    try {
+      await FCMService.dispose();
+      print('FCM resources disposed during user data clearing');
+    } catch (e) {
+      print('Error disposing FCM resources: $e');
+    }
     
     // Clear all user data
     _currentUser = null;
@@ -365,6 +477,102 @@ class UserService extends ChangeNotifier {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       notifyListeners();
     });
+  }
+
+  // Update notification preferences
+  Future<bool> updateNotificationPreferences({
+    bool? enableNotifications,
+    Map<String, bool>? preferences,
+  }) async {
+    if (_auth.currentUser == null || _currentUser == null) {
+      print('Cannot update notification preferences: No authenticated user');
+      return false;
+    }
+
+    _setLoading(true);
+    _clearError();
+
+    try {
+      print('Updating notification preferences');
+      
+      final updateData = <String, dynamic>{};
+      
+      // Update general notification setting if provided
+      if (enableNotifications != null) {
+        updateData['notificationsEnabled'] = enableNotifications;
+      }
+      
+      // Update specific notification preferences if provided
+      if (preferences != null && preferences.isNotEmpty) {
+        // Merge with existing preferences rather than replacing completely
+        final currentPrefs = _currentUser!.notificationPreferences;
+        final mergedPrefs = Map<String, bool>.from(currentPrefs);
+        mergedPrefs.addAll(preferences);
+        
+        updateData['notificationPreferences'] = mergedPrefs;
+      }
+      
+      // Only update if there are changes to make
+      if (updateData.isNotEmpty) {
+        await _firestore
+            .collection('users')
+            .doc(_auth.currentUser!.uid)
+            .update(updateData);
+        
+        // Update local user object
+        if (_currentUser != null) {
+          if (enableNotifications != null) {
+            _currentUser = _currentUser!.copyWith(
+              notificationsEnabled: enableNotifications,
+            );
+          }
+          
+          if (preferences != null && preferences.isNotEmpty) {
+            final currentPrefs = _currentUser!.notificationPreferences;
+            final mergedPrefs = Map<String, bool>.from(currentPrefs);
+            mergedPrefs.addAll(preferences);
+            
+            _currentUser = _currentUser!.copyWith(
+              notificationPreferences: mergedPrefs,
+            );
+          }
+        }
+        
+        print('Notification preferences updated successfully');
+      } else {
+        print('No notification preference changes to update');
+      }
+      
+      return true;
+    } catch (e) {
+      print('Error updating notification preferences: $e');
+      _setError('Failed to update notification preferences: ${e.toString()}');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Update FCM token
+  Future<bool> updateFCMToken() async {
+    if (_auth.currentUser == null) {
+      print('Cannot update FCM token: No authenticated user');
+      return false;
+    }
+
+    try {
+      print('Updating FCM token');
+      return await FCMService.updateUserToken();
+    } catch (e) {
+      print('Error updating FCM token: $e');
+      return false;
+    }
+  }
+
+  // Check if notifications are enabled for a specific type
+  bool isNotificationEnabled(String type) {
+    if (_currentUser == null) return false;
+    return _currentUser!.isNotificationEnabled(type);
   }
 
   @override

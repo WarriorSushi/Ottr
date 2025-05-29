@@ -1,0 +1,80 @@
+// Firestore security rules with FCM token protection
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidFCMToken(token) {
+      // FCM tokens are typically long strings
+      return token is string && token.size() > 50;
+    }
+    
+    function isValidTimestamp(timestamp) {
+      return timestamp is timestamp;
+    }
+    
+    // Users collection rules
+    match /users/{userId} {
+      // Basic read rules
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      
+      // Create rules
+      allow create: if isOwner(userId) && 
+                     request.resource.data.keys().hasAll(['email', 'username', 'createdAt']) &&
+                     (!request.resource.data.keys().hasAny(['fcmToken']) || 
+                      (isValidFCMToken(request.resource.data.fcmToken) && 
+                       isValidTimestamp(request.resource.data.fcmTokenUpdated)));
+      
+      // Update rules
+      allow update: if isOwner(userId) && 
+                     // Allow updating basic profile info
+                     (request.resource.data.diff(resource.data).affectedKeys()
+                      .hasAny(['username', 'bio', 'photoURL', 'updatedAt']) ||
+                      // Allow updating connection status
+                      request.resource.data.diff(resource.data).affectedKeys()
+                      .hasAny(['connectionStatus', 'connectedTo']) ||
+                      // Allow updating FCM token with validation
+                      (request.resource.data.diff(resource.data).affectedKeys()
+                       .hasAny(['fcmToken', 'fcmTokenUpdated', 'platform']) &&
+                       isValidFCMToken(request.resource.data.fcmToken) &&
+                       isValidTimestamp(request.resource.data.fcmTokenUpdated)) ||
+                      // Allow updating notification preferences
+                      request.resource.data.diff(resource.data).affectedKeys()
+                      .hasAny(['notificationsEnabled', 'notificationPreferences']));
+      
+      // Delete rules
+      allow delete: if isOwner(userId);
+    }
+    
+    // Messages collection rules
+    match /messages/{chatId} {
+      // Basic document rules
+      allow get: if isSignedIn() && 
+                  exists(/databases/$(database)/documents/messages/$(chatId)) &&
+                  resource.data.participants.hasAny([request.auth.uid]);
+      
+      allow create, update: if isSignedIn() && 
+                              request.resource.data.participants.hasAny([request.auth.uid]);
+      
+      // Chat messages subcollection rules
+      match /chats/{messageId} {
+        allow read: if isSignedIn() && 
+                     exists(/databases/$(database)/documents/messages/$(chatId)) &&
+                     get(/databases/$(database)/documents/messages/$(chatId)).data.participants.hasAny([request.auth.uid]);
+        
+        allow create: if isSignedIn() && 
+                       exists(/databases/$(database)/documents/messages/$(chatId)) &&
+                       get(/databases/$(database)/documents/messages/$(chatId)).data.participants.hasAny([request.auth.uid]) &&
+                       request.resource.data.senderId == request.auth.uid;
+      }
+    }
+  }
+}

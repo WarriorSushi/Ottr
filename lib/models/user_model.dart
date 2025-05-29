@@ -6,6 +6,13 @@ class UserModel {
   final String? connectedTo;
   final String connectionStatus; // none, pending, connected
   final DateTime createdAt;
+  
+  // FCM-related fields
+  final String? fcmToken;
+  final DateTime? fcmTokenUpdated;
+  final String? platform;
+  final bool notificationsEnabled;
+  final Map<String, bool> notificationPreferences;
 
   UserModel({
     required this.uid,
@@ -14,6 +21,15 @@ class UserModel {
     this.connectedTo,
     required this.connectionStatus,
     required this.createdAt,
+    this.fcmToken,
+    this.fcmTokenUpdated,
+    this.platform,
+    this.notificationsEnabled = true,
+    this.notificationPreferences = const {
+      'messages': true,
+      'connections': true,
+      'system': true,
+    },
   });
 
   /// Create a UserModel from a Firestore document
@@ -25,6 +41,17 @@ class UserModel {
       connectedTo: data['connectedTo'],
       connectionStatus: data['connectionStatus'] ?? 'none',
       createdAt: data['createdAt']?.toDate() ?? DateTime.now(),
+      fcmToken: data['fcmToken'],
+      fcmTokenUpdated: data['fcmTokenUpdated']?.toDate(),
+      platform: data['platform'],
+      notificationsEnabled: data['notificationsEnabled'] ?? true,
+      notificationPreferences: Map<String, bool>.from(
+        data['notificationPreferences'] ?? {
+          'messages': true,
+          'connections': true,
+          'system': true,
+        },
+      ),
     );
   }
 
@@ -36,7 +63,31 @@ class UserModel {
       'connectedTo': connectedTo,
       'connectionStatus': connectionStatus,
       'createdAt': createdAt,
+      'fcmToken': fcmToken,
+      'fcmTokenUpdated': fcmTokenUpdated,
+      'platform': platform,
+      'notificationsEnabled': notificationsEnabled,
+      'notificationPreferences': notificationPreferences,
     };
+  }
+  
+  /// Check if user has valid FCM token
+  bool get hasValidFCMToken {
+    if (fcmToken == null || fcmToken!.isEmpty) return false;
+    
+    // Check if token is older than 30 days
+    if (fcmTokenUpdated != null) {
+      final daysSinceUpdate = DateTime.now().difference(fcmTokenUpdated!).inDays;
+      return daysSinceUpdate < 30;
+    }
+    
+    return true;
+  }
+
+  /// Check if specific notification type is enabled
+  bool isNotificationEnabled(String type) {
+    if (!notificationsEnabled) return false;
+    return notificationPreferences[type] ?? false;
   }
 
   /// Create a copy of UserModel with updated fields
@@ -47,6 +98,11 @@ class UserModel {
     String? connectedTo,
     String? connectionStatus,
     DateTime? createdAt,
+    String? fcmToken,
+    DateTime? fcmTokenUpdated,
+    String? platform,
+    bool? notificationsEnabled,
+    Map<String, bool>? notificationPreferences,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -55,6 +111,11 @@ class UserModel {
       connectedTo: connectedTo ?? this.connectedTo,
       connectionStatus: connectionStatus ?? this.connectionStatus,
       createdAt: createdAt ?? this.createdAt,
+      fcmToken: fcmToken ?? this.fcmToken,
+      fcmTokenUpdated: fcmTokenUpdated ?? this.fcmTokenUpdated,
+      platform: platform ?? this.platform,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      notificationPreferences: notificationPreferences ?? this.notificationPreferences,
     );
   }
 }

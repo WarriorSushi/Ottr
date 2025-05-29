@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    // Check if two users are connected
+    function areUsersConnected(userId1, userId2) {
+      if (userId1 == null || userId2 == null) { return false; }
+      let user1Doc = getUserData(userId1);
+      let user2Doc = getUserData(userId2);
+      return user1Doc.connectionStatus == 'connected' && user1Doc.connectedTo == userId2 &&
+             user2Doc.connectionStatus == 'connected' && user2Doc.connectedTo == userId1;
+    }
+
+    function isValidFCMToken(token) {
+      return token is string && token.size() > 20 && token.size() < 200;
+    }
+
+    function isValidTimestamp(timestamp) {
+      return timestamp is timestamp;
+    }
+
+    // --- User Collection Rules ---
+    match /users/{userId} {
+      // Read rules - allow users to see basic profile info of other users
+      allow get: if isSignedIn();
+      
+      // For our app, we need to list users for discovery
+      allow list: if isSignedIn();
+
+      // Create rules
+      allow create: if isOwner(userId) &&
+                      request.resource.data.keys().hasAll(['username', 'email', 'createdAt', 'connectionStatus']) &&
+                      request.resource.data.username is string && 
+                      request.resource.data.connectionStatus == 'none' &&
+                      (!request.resource.data.keys().hasAny(['fcmToken']) || 
+                       (isValidFCMToken(request.resource.data.fcmToken) &&
+                        isValidTimestamp(request.resource.data.fcmTokenUpdated) &&
+                        request.resource.data.platform is string));
+
+      // Update rules
+      allow update: if isOwner(userId) &&
+                     // Allow updating basic profile info
+                     (request.resource.data.diff(resource.data).affectedKeys()
+                      .hasAny(['username', 'updatedAt']) ||
+                     // Allow updating connection status
+                     request.resource.data.diff(resource.data).affectedKeys()
+                     .hasAny(['connectionStatus', 'connectedTo']) ||
+                     // Allow updating FCM token with validation
+                     (request.resource.data.diff(resource.data).affectedKeys()
+                      .hasAny(['fcmToken', 'fcmTokenUpdated', 'platform']) &&
+                      isValidFCMToken(request.resource.data.fcmToken) &&
+                      isValidTimestamp(request.resource.data.fcmTokenUpdated)) ||
+                     // Allow updating notification preferences
+                     request.resource.data.diff(resource.data).affectedKeys()
+                     .hasAny(['notificationsEnabled', 'notificationPreferences']));
+
+      // Delete rules
+      allow delete: if isOwner(userId);
+    }
+
+    // --- Messages Collection Rules ---
+    match /messages/{chatId} {
+      let uids = chatId.split('_');
+      let user1Id = uids[0];
+      let user2Id = uids[1];
+
+      function isChatParticipant() {
+        return isSignedIn() && (request.auth.uid == user1Id || request.auth.uid == user2Id);
+      }
+
+      // Read rules
+      allow get: if isChatParticipant();
+      
+      // Create/update rules
+      allow create, update: if isChatParticipant() &&
+                              request.resource.data.participants.hasAll([user1Id, user2Id]) &&
+                              request.resource.data.participants.size() == 2;
+
+      // Chat messages subcollection rules
+      match /chats/{messageId} {
+        allow read: if isChatParticipant();
+        
+        allow create: if isChatParticipant() &&
+                       request.resource.data.senderId == request.auth.uid &&
+                       request.resource.data.message is string &&
+                       request.resource.data.timestamp is timestamp;
+        
+        // Messages are immutable
+        allow update, delete: if false;
+      }
+    }
+
+    // --- Default Deny ---
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

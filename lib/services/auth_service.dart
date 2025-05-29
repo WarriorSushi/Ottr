@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
+import 'fcm_service.dart';
 
 /// Service for handling Firebase authentication
 class AuthService {
@@ -93,14 +95,30 @@ class AuthService {
   Future<void> createUserDocument(
       String uid, String email, String username) async {
     try {
+      // Get FCM token for the new user
+      final fcmToken = await FCMService.getToken();
+      
       await _firestore.collection('users').doc(uid).set({
         'email': email,
         'username': username,
         'connectedTo': null,
         'connectionStatus': 'none',
         'createdAt': FieldValue.serverTimestamp(),
+        // FCM fields
+        'fcmToken': fcmToken,
+        'fcmTokenUpdated': FieldValue.serverTimestamp(),
+        'platform': Platform.operatingSystem,
+        'notificationsEnabled': true,
+        'notificationPreferences': {
+          'messages': true,
+          'connections': true,
+          'system': true,
+        },
       });
+      
+      print('User document created with FCM token: ${fcmToken != null ? 'Yes' : 'No'}');
     } catch (e) {
+      print('Error creating user document: $e');
       rethrow;
     }
   }
@@ -138,6 +156,9 @@ class AuthService {
         final userProfile = await getCurrentUserProfile();
         if (userProfile != null) {
           print('Login completed successfully with profile');
+          // Update FCM token after successful login
+          await FCMService.updateUserToken();
+          print('FCM token updated after login');
           return userProfile;
         } else {
           print('Warning: User authenticated but profile not found');
@@ -181,6 +202,11 @@ class AuthService {
   Future<void> signOut() async {
     try {
       print('Signing out user...');
+      
+      // Dispose FCM resources before sign out
+      await FCMService.dispose();
+      print('FCM resources disposed');
+      
       await _auth.signOut();
       print('Sign out successful');
     } catch (e) {
