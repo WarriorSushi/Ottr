@@ -55,4 +55,7 @@ dependencies {
     
     // Add desugaring library for flutter_local_notifications
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
+    
+    // Add Play Core library for app bundle support (fixes R8 release build issues)
+    implementation("com.google.android.play:core:1.10.3")
 }
