@@ -22,6 +22,35 @@ class AuthService {
         );
   }
 
+  // Add this method to fetch user profile after login
+  Future<UserModel?> getCurrentUserProfile() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        print('No authenticated user found');
+        return null;
+      }
+
+      print('Fetching user profile for UID: ${user.uid}');
+      final doc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists && doc.data() != null) {
+        final userModel = UserModel.fromMap(doc.data()!, doc.id);
+        print('User profile loaded: ${userModel.username}');
+        return userModel;
+      } else {
+        print('User document does not exist in Firestore');
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching user profile: $e');
+      return null;
+    }
+  }
+
   // Register with email and password
   Future<User?> registerWithEmailAndPassword(
       String email, String password) async {
@@ -90,8 +119,8 @@ class AuthService {
     }
   }
 
-  // Sign in with email and password
-  Future<User?> signInWithEmailAndPassword(
+  // Enhanced sign in with email and password with profile fetching
+  Future<UserModel?> signInWithEmailAndPassword(
       String email, String password) async {
     try {
       print('Attempting to sign in user with email: $email');
@@ -99,7 +128,30 @@ class AuthService {
         email: email,
         password: password,
       );
-      return result.user;
+      
+      if (result.user != null) {
+        print('Authentication successful, fetching user profile...');
+        // Small delay to ensure Firestore is ready
+        await Future.delayed(Duration(milliseconds: 500));
+        
+        // Fetch and return user profile
+        final userProfile = await getCurrentUserProfile();
+        if (userProfile != null) {
+          print('Login completed successfully with profile');
+          return userProfile;
+        } else {
+          print('Warning: User authenticated but profile not found');
+          // Return minimal user data for new users
+          return UserModel(
+            uid: result.user!.uid,
+            email: email,
+            username: '', // Empty username indicates setup needed
+            connectionStatus: 'none',
+            createdAt: DateTime.now(),
+          );
+        }
+      }
+      return null;
     } on FirebaseAuthException catch (e) {
       // Handle Firebase-specific errors
       print('FirebaseAuthException: ${e.code} - ${e.message}');
@@ -117,7 +169,8 @@ class AuthService {
         User? user = _auth.currentUser;
         if (user != null) {
           print('Retrieved current user despite error: ${user.uid}');
-          return user;
+          // Try to get user profile
+          return await getCurrentUserProfile();
         }
       }
       throw e;
@@ -127,9 +180,23 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
-      return await _auth.signOut();
+      print('Signing out user...');
+      await _auth.signOut();
+      print('Sign out successful');
     } catch (e) {
+      print('Error during sign out: $e');
       rethrow;
+    }
+  }
+  
+  // Check if user has completed profile setup
+  Future<bool> hasCompletedProfile() async {
+    try {
+      final userProfile = await getCurrentUserProfile();
+      return userProfile != null && userProfile.username.isNotEmpty;
+    } catch (e) {
+      print('Error checking profile completion: $e');
+      return false;
     }
   }
 }

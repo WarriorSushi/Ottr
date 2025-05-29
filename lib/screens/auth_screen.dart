@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../constants.dart';
+import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/facts_box.dart';
@@ -43,8 +44,8 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       if (_isLogin) {
         // Login
-        User? user = await _authService.signInWithEmailAndPassword(_email, _password);
-        if (user == null) {
+        UserModel? userModel = await _authService.signInWithEmailAndPassword(_email, _password);
+        if (userModel == null) {
           throw FirebaseAuthException(
             code: 'login-failed',
             message: 'Failed to sign in to account',

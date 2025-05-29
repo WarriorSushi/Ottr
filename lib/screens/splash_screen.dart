@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import 'auth_screen.dart';
 import 'username_screen.dart';
 import 'connect_screen.dart';
@@ -17,93 +18,122 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  String? _errorMessage;
+  
   @override
   void initState() {
     super.initState();
-    // Navigate to the appropriate screen after a delay
-    Future.delayed(const Duration(seconds: 2), () {
-      navigateToNextScreen();
-    });
+    _initializeApp();
   }
 
-  Future<void> navigateToNextScreen() async {
+  Future<void> _initializeApp() async {
     try {
-      // Add a small delay to ensure any pending auth state changes are processed
-      await Future.delayed(const Duration(milliseconds: 500));
+      print('Initializing app...');
       
+      // Initialize UserService
+      final userService = Provider.of<UserService>(context, listen: false);
+      await userService.initialize();
+      
+      // Small delay for splash screen effect
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // Navigate based on authentication and profile status
+      await _navigateToAppropriateScreen();
+      
+    } catch (e) {
+      print('Error during app initialization: $e');
+      setState(() {
+        _errorMessage = 'Failed to initialize app: $e';
+      });
+      // Show error dialog or navigate to login after a delay
+      await Future.delayed(const Duration(seconds: 2));
+      _navigateToLogin();
+    }
+  }
+
+  Future<void> _navigateToAppropriateScreen() async {
+    try {
       // Check if onboarding has been completed
       final prefs = await SharedPreferences.getInstance();
       final bool onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
       
       if (!onboardingComplete && mounted) {
         // Show onboarding screen if it's the first launch
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-        );
+        _navigateToOnboarding();
         return;
       }
       
-      // Check if user is already logged in
-      User? user = FirebaseAuth.instance.currentUser;
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userService = Provider.of<UserService>(context, listen: false);
+      
+      // Check if user is authenticated
+      if (authService.currentUser == null) {
+        print('No authenticated user, navigating to login');
+        _navigateToLogin();
+        return;
+      }
 
-      if (user != null) {
-        // Add a small delay to ensure the user document is available
-        await Future.delayed(const Duration(milliseconds: 500));
-        
-        // User is logged in, check if username is set
-        try {
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
+      print('User is authenticated, checking profile completeness...');
+      
+      // Check if user profile is loaded and complete
+      if (userService.currentUser == null) {
+        print('User profile not loaded, loading now...');
+        await userService.loadUserProfile();
+      }
 
-          if (!mounted) return;
-          
-          if (!userDoc.exists) {
-            // User document doesn't exist, navigate to username screen
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const UsernameScreen()),
-            );
-            return;
-          }
-          
-          final userData = userDoc.data();
-          if (userData == null || userData['username'] == null) {
-            // Username is not set, navigate to username screen
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const UsernameScreen()),
-            );
-          } else {
-            // Username is set, navigate to connect screen
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const ConnectScreen()),
-            );
-          }
-        } catch (e) {
-          print('Error fetching user document: $e');
-          // If there's an error, navigate to auth screen to be safe
-          if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const AuthScreen()),
-            );
-          }
-        }
+      // Wait a moment for UserService to be ready
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (userService.currentUser == null) {
+        print('Failed to load user profile, navigating to login');
+        _navigateToLogin();
+      } else if (!userService.hasUsername) {
+        print('User exists but no username, navigating to username setup');
+        _navigateToUsernameSetup();
       } else {
-        // User is not logged in, navigate to auth screen
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const AuthScreen()),
-          );
-        }
+        print('User profile complete, navigating to main app');
+        _navigateToMain();
       }
+      
     } catch (e) {
-      print('Error in splash screen navigation: $e');
-      // If any error occurs, default to auth screen
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AuthScreen()),
-        );
-      }
+      print('Error checking user status: $e');
+      setState(() {
+        _errorMessage = 'Error checking user status: $e';
+      });
+      await Future.delayed(const Duration(seconds: 2));
+      _navigateToLogin();
+    }
+  }
+
+  void _navigateToLogin() {
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const AuthScreen()),
+      );
+    }
+  }
+
+  void _navigateToUsernameSetup() {
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const UsernameScreen()),
+      );
+    }
+  }
+
+  void _navigateToMain() {
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const ConnectScreen()),
+      );
+    }
+  }
+  
+  void _navigateToOnboarding() {
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      );
     }
   }
 
@@ -162,6 +192,23 @@ class _SplashScreenState extends State<SplashScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
+              // Error message if there's an error
+              if (_errorMessage != null) ...[
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               // Subtle loading indicator
               Container(
                 decoration: BoxDecoration(
