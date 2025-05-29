@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
-import 'fcm_service.dart';
+import 'fcm_service_simple.dart';
 
 /// Service for managing user data and connections
 class UserService extends ChangeNotifier {
@@ -460,7 +460,7 @@ class UserService extends ChangeNotifier {
     
     // Dispose FCM resources
     try {
-      await FCMService.dispose();
+      await FCMServiceSimple.dispose();
       print('FCM resources disposed during user data clearing');
     } catch (e) {
       print('Error disposing FCM resources: $e');
@@ -562,7 +562,7 @@ class UserService extends ChangeNotifier {
 
     try {
       print('Updating FCM token');
-      return await FCMService.updateUserToken();
+      return await FCMServiceSimple.updateUserToken();
     } catch (e) {
       print('Error updating FCM token: $e');
       return false;

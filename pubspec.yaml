@@ -47,8 +47,8 @@ dependencies:
   cloud_firestore: ^4.13.6
   firebase_messaging: ^14.7.9  # FCM Core
 
-  # FCM Local Notifications
-  flutter_local_notifications: ^14.1.1  # Downgraded for compatibility
+  # FCM Notifications
+  # flutter_local_notifications: ^8.2.0  # Commented out due to compatibility issues
   permission_handler: ^11.2.0
 
   # UI and utility packages

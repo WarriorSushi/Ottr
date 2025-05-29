@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import 'constants.dart';
+import 'navigator_key.dart';
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
 import 'screens/notification_settings_screen.dart';
@@ -10,7 +11,7 @@ import 'screens/settings_screen.dart';
 import 'screens/notification_test_screen.dart';
 import 'services/auth_service.dart';
 import 'services/user_service.dart';
-import 'services/fcm_service.dart';
+import 'services/fcm_service_simple.dart';
 import 'services/background_message_handler.dart';
 
 void main() async {
@@ -53,7 +54,7 @@ class _OttrAppState extends State<OttrApp> {
   Future<void> _initializeFCM() async {
     try {
       // Initialize FCM service
-      final fcmInitialized = await FCMService.initialize();
+      final fcmInitialized = await FCMServiceSimple.initialize();
       if (!fcmInitialized) {
         debugPrint('⚠️ FCM initialization failed, but app will continue');
       } else {

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
-import 'fcm_service.dart';
+import 'fcm_service_simple.dart';
 
 /// Service for handling Firebase authentication
 class AuthService {
@@ -95,8 +95,8 @@ class AuthService {
   Future<void> createUserDocument(
       String uid, String email, String username) async {
     try {
-      // Get FCM token for the new user
-      final fcmToken = await FCMService.getToken();
+      // Get FCM token for the new user - using simplified service
+      final fcmToken = await FCMServiceSimple.updateUserToken() ? 'token_generated' : null;
       
       await _firestore.collection('users').doc(uid).set({
         'email': email,
@@ -157,7 +157,7 @@ class AuthService {
         if (userProfile != null) {
           print('Login completed successfully with profile');
           // Update FCM token after successful login
-          await FCMService.updateUserToken();
+          await FCMServiceSimple.updateUserToken();
           print('FCM token updated after login');
           return userProfile;
         } else {
@@ -204,7 +204,7 @@ class AuthService {
       print('Signing out user...');
       
       // Dispose FCM resources before sign out
-      await FCMService.dispose();
+      await FCMServiceSimple.dispose();
       print('FCM resources disposed');
       
       await _auth.signOut();

@@ -18,11 +18,6 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
   bool _isLoading = false;
   String _statusMessage = '';
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   // Update FCM token
   Future<void> _updateFCMToken() async {
     setState(() {
@@ -114,17 +109,8 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
     final userService = Provider.of<UserService>(context);
     final currentUser = userService.currentUser;
     
-    if (currentUser == null) {
-      return const Scaffold(
-        body: Center(child: Text('User not logged in')),
-      );
-    }
-    
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Notification Testing',
-        showBackButton: true,
-      ),
+      appBar: OttrAppBar(title: 'Notification Testing'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -138,48 +124,13 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'FCM Token Information',
+                      'FCM Token Management',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'User: ${currentUser.username}',
+                      'Current user: ${currentUser?.username ?? 'Not logged in'}',
                       style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    if (currentUser.fcmToken != null) ...[  
-                      Text(
-                        'Token: ${currentUser.fcmToken!.length > 20 ? currentUser.fcmToken!.substring(0, 20) + "..." : currentUser.fcmToken}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      Text(
-                        'Last Updated: ${currentUser.fcmTokenUpdated?.toString() ?? "Unknown"}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      Text(
-                        'Platform: ${currentUser.platform ?? "Unknown"}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ] else
-                      Text(
-                        'No FCM token available',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'FCM Token Management',
-                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
