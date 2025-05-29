@@ -10,12 +10,14 @@ plugins {
 
 android {
     namespace = "com.ottr.ottr_app"
-    compileSdk = 34 // Updated for FCM compatibility
+    compileSdk = 35 // Updated for shared_preferences_android compatibility
     ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // Enable desugaring for flutter_local_notifications
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -25,7 +27,7 @@ android {
     defaultConfig {
         applicationId = "com.ottr.ottr_app"
         minSdk = 21 // Ensuring compatibility with Firebase
-        targetSdk = 34 // Updated for FCM compatibility
+        targetSdk = 35 // Updated for shared_preferences_android compatibility
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true // Added for FCM
@@ -50,4 +52,7 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging")
     implementation("androidx.work:work-runtime:2.8.1")
     implementation("androidx.multidex:multidex:2.0.1")
+    
+    // Add desugaring library for flutter_local_notifications
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
 }

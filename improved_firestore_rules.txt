@@ -1,9 +1,193 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write access to authenticated users during development
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    // Check if two users are mutually connected (CRITICAL for messaging security)
+    function areUsersConnected(userId1, userId2) {
+      if (userId1 == null || userId2 == null) { return false; }
+      let user1Doc = getUserData(userId1);
+      let user2Doc = getUserData(userId2);
+      return user1Doc.connectionStatus == 'connected' && user1Doc.connectedTo == userId2 &&
+             user2Doc.connectionStatus == 'connected' && user2Doc.connectedTo == userId1;
+    }
+
+    function isValidFCMToken(token) {
+      return token is string && token.size() > 20 && token.size() < 200;
+    }
+
+    function isValidTimestamp(timestamp) {
+      return timestamp is timestamp;
+    }
+
+    function isValidUsername(username) {
+      return username is string && username.size() >= 3 && username.size() <= 20 &&
+             username.matches('[a-zA-Z0-9_]+');
+    }
+
+    function isValidConnectionStatus(status) {
+      return status in ['none', 'pending_sent', 'pending_received', 'connected'];
+    }
+
+    // --- Public Profiles Collection (for user discovery) ---
+    match /public_profiles/{userId} {
+      // Anyone can read public profiles for user discovery
+      allow get, list: if isSignedIn();
+      
+      // Only owner can create/update their public profile
+      allow create: if isOwner(userId) &&
+                      request.resource.data.keys().hasAll(['username', 'createdAt']) &&
+                      isValidUsername(request.resource.data.username);
+      
+      allow update: if isOwner(userId) &&
+                      request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['username', 'updatedAt']) &&
+                      (!request.resource.data.keys().hasAny(['username']) || 
+                       isValidUsername(request.resource.data.username));
+      
+      allow delete: if isOwner(userId);
+    }
+
+    // --- Private User Collection (sensitive data) ---
+    match /users/{userId} {
+      // Only owner can read their private data
+      allow get: if isOwner(userId);
+      
+      // No listing of private user data
+      allow list: if false;
+
+      // Create rules with enhanced validation
+      allow create: if isOwner(userId) &&
+                      request.resource.data.keys().hasAll(['username', 'email', 'createdAt', 'connectionStatus']) &&
+                      isValidUsername(request.resource.data.username) &&
+                      request.resource.data.email is string &&
+                      isValidConnectionStatus(request.resource.data.connectionStatus) &&
+                      request.resource.data.connectionStatus == 'none' &&
+                      !request.resource.data.keys().hasAny(['connectedTo']) &&
+                      (!request.resource.data.keys().hasAny(['fcmToken']) || 
+                       (isValidFCMToken(request.resource.data.fcmToken) &&
+                        isValidTimestamp(request.resource.data.fcmTokenUpdated) &&
+                        request.resource.data.platform is string));
+
+      // Enhanced update rules with connection state validation
+      allow update: if isOwner(userId) &&
+                     (
+                       // Allow updating basic profile info
+                       (request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['username', 'updatedAt']) &&
+                        (!request.resource.data.keys().hasAny(['username']) || 
+                         isValidUsername(request.resource.data.username))) ||
+                       
+                       // Allow updating FCM token with validation
+                       (request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['fcmToken', 'fcmTokenUpdated', 'platform']) &&
+                        isValidFCMToken(request.resource.data.fcmToken) &&
+                        isValidTimestamp(request.resource.data.fcmTokenUpdated) &&
+                        request.resource.data.platform is string) ||
+                       
+                       // Allow updating notification preferences
+                       (request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['notificationsEnabled', 'notificationPreferences'])) ||
+                       
+                       // CRITICAL: Enhanced connection state management
+                       (request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['connectionStatus', 'connectedTo', 'updatedAt']) &&
+                        isValidConnectionStatus(request.resource.data.connectionStatus) &&
+                        
+                        // Validation rules for different connection states
+                        (
+                          // Setting to 'none' - must clear connectedTo
+                          (request.resource.data.connectionStatus == 'none' &&
+                           !request.resource.data.keys().hasAny(['connectedTo'])) ||
+                          
+                          // Setting to 'pending_sent' - must have valid connectedTo
+                          (request.resource.data.connectionStatus == 'pending_sent' &&
+                           request.resource.data.connectedTo is string &&
+                           request.resource.data.connectedTo != userId &&
+                           resource.data.connectionStatus == 'none') ||
+                          
+                          // Setting to 'pending_received' - only if other user has pending_sent to this user
+                          (request.resource.data.connectionStatus == 'pending_received' &&
+                           request.resource.data.connectedTo is string &&
+                           request.resource.data.connectedTo != userId &&
+                           resource.data.connectionStatus == 'none' &&
+                           getUserData(request.resource.data.connectedTo).connectionStatus == 'pending_sent' &&
+                           getUserData(request.resource.data.connectedTo).connectedTo == userId) ||
+                          
+                          // Setting to 'connected' - only if both users have matching pending states
+                          (request.resource.data.connectionStatus == 'connected' &&
+                           request.resource.data.connectedTo is string &&
+                           request.resource.data.connectedTo != userId &&
+                           ((resource.data.connectionStatus == 'pending_received' &&
+                             getUserData(request.resource.data.connectedTo).connectionStatus == 'pending_sent' &&
+                             getUserData(request.resource.data.connectedTo).connectedTo == userId) ||
+                            (resource.data.connectionStatus == 'pending_sent' &&
+                             getUserData(request.resource.data.connectedTo).connectionStatus == 'pending_received' &&
+                             getUserData(request.resource.data.connectedTo).connectedTo == userId)))
+                        ))
+                     );
+
+      allow delete: if isOwner(userId);
+    }
+
+    // --- Conversations Collection (renamed from messages for clarity) ---
+    match /conversations/{conversationId} {
+      let uids = conversationId.split('_');
+      let user1Id = uids[0];
+      let user2Id = uids[1];
+
+      function isConversationParticipant() {
+        return isSignedIn() && (request.auth.uid == user1Id || request.auth.uid == user2Id);
+      }
+
+      // CRITICAL: Only connected users can access conversations
+      allow get: if isConversationParticipant() && areUsersConnected(user1Id, user2Id);
+      
+      // CRITICAL: Only connected users can create conversations
+      allow create: if isConversationParticipant() && 
+                     areUsersConnected(user1Id, user2Id) &&
+                     request.resource.data.participants.hasAll([user1Id, user2Id]) &&
+                     request.resource.data.participants.size() == 2;
+
+      // Allow updating conversation metadata but participants cannot change
+      allow update: if isConversationParticipant() && 
+                     areUsersConnected(user1Id, user2Id) &&
+                     request.resource.data.participants == resource.data.participants;
+
+      // Individual Messages Subcollection
+      match /messages/{messageId} {
+        // CRITICAL: Only connected users can read messages
+        allow read: if isConversationParticipant() && areUsersConnected(user1Id, user2Id);
+        
+        // CRITICAL: Only connected users can send messages
+        allow create: if isConversationParticipant() && 
+                       areUsersConnected(user1Id, user2Id) &&
+                       request.resource.data.senderId == request.auth.uid &&
+                       request.resource.data.message is string &&
+                       request.resource.data.timestamp is timestamp &&
+                       request.resource.data.receiverId in [user1Id, user2Id] &&
+                       request.resource.data.receiverId != request.auth.uid;
+        
+        // Messages remain immutable
+        allow update, delete: if false;
+      }
+    }
+
+    // --- Default Deny ---
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }
