@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'constants.dart';
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
+import 'services/auth_service.dart';
+import 'services/user_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +20,17 @@ class OttrApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MultiProvider(
+      providers: [
+        Provider<AuthService>(
+          create: (_) => AuthService(),
+        ),
+        ChangeNotifierProvider<UserService>(
+          create: (context) => UserService(),
+          lazy: false, // Initialize immediately
+        ),
+      ],
+      child: MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -108,6 +121,7 @@ class OttrApp extends StatelessWidget {
         ),
       ),
       home: const SplashScreen(),
+    ),
     );
   }
 }

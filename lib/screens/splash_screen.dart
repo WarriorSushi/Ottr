@@ -78,20 +78,29 @@ class _SplashScreenState extends State<SplashScreen> {
       // Check if user profile is loaded and complete
       if (userService.currentUser == null) {
         print('User profile not loaded, loading now...');
+        // First attempt to load user profile
         await userService.loadUserProfile();
+        
+        // Wait longer to ensure profile loads (handling PigeonUserDetails recovery)
+        await Future.delayed(const Duration(seconds: 1));
+        
+        // If still null, try one more time (similar to the recovery pattern in AuthService)
+        if (userService.currentUser == null) {
+          print('Retrying profile load after delay...');
+          await userService.loadUserProfile();
+          await Future.delayed(const Duration(seconds: 1));
+        }
       }
 
-      // Wait a moment for UserService to be ready
-      await Future.delayed(const Duration(milliseconds: 500));
-
+      // Final check after all loading attempts
       if (userService.currentUser == null) {
-        print('Failed to load user profile, navigating to login');
+        print('Failed to load user profile after multiple attempts, navigating to login');
         _navigateToLogin();
       } else if (!userService.hasUsername) {
         print('User exists but no username, navigating to username setup');
         _navigateToUsernameSetup();
       } else {
-        print('User profile complete, navigating to main app');
+        print('User profile complete with username: ${userService.currentUser?.username}, navigating to main app');
         _navigateToMain();
       }
       

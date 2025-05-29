@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../constants.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/facts_box.dart';
 import 'username_screen.dart';
+import 'splash_screen.dart';
 
 /// Authentication screen for login and registration
 class AuthScreen extends StatefulWidget {
@@ -44,6 +47,7 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       if (_isLogin) {
         // Login
+        print('Attempting to sign in user with email: $_email');
         UserModel? userModel = await _authService.signInWithEmailAndPassword(_email, _password);
         if (userModel == null) {
           throw FirebaseAuthException(
@@ -51,8 +55,28 @@ class _AuthScreenState extends State<AuthScreen> {
             message: 'Failed to sign in to account',
           );
         }
+        
+        // Update UserService with the logged-in user
+        if (mounted) {
+          final userService = Provider.of<UserService>(context, listen: false);
+          userService.setCurrentUser(userModel);
+          
+          // Navigate based on username presence
+          if (userModel.username.isNotEmpty) {
+            // User has a username, go to SplashScreen to handle proper routing
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const SplashScreen()),
+            );
+          } else {
+            // User needs to set up username
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const UsernameScreen()),
+            );
+          }
+        }
       } else {
         // Register
+        print('Attempting to register user with email: $_email');
         User? user = await _authService.registerWithEmailAndPassword(_email, _password);
         if (user == null) {
           throw FirebaseAuthException(
@@ -60,13 +84,13 @@ class _AuthScreenState extends State<AuthScreen> {
             message: 'Failed to create user account',
           );
         }
-      }
-      
-      // If we get here, authentication was successful
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const UsernameScreen()),
-        );
+        
+        // For new registrations, always go to username screen
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const UsernameScreen()),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       String message = 'An error occurred';

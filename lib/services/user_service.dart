@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
@@ -20,6 +21,23 @@ class UserService extends ChangeNotifier {
   String? get error => _error;
   bool get hasUsername => _currentUser?.username.isNotEmpty ?? false;
   bool get isLoggedIn => _auth.currentUser != null && _currentUser != null;
+
+  // Method to explicitly set the current user
+  void setCurrentUser(UserModel user) {
+    _currentUser = user;
+    print('UserService: Current user explicitly set via setCurrentUser: ${user.username}');
+    _isLoading = false; // Ensure loading state is reset
+    _error = null;    // Clear any previous errors
+    // Ensure listener is active for this user, authStateChanges listener should also handle this.
+    if (_auth.currentUser != null && _auth.currentUser!.uid == user.uid) {
+       _setupUserListener(user.uid);
+    }
+    // Defer notification to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
+  }
+
 
   // Initialize user service and set up listeners
   Future<void> initialize() async {
@@ -306,18 +324,29 @@ class UserService extends ChangeNotifier {
   
   // Helper methods
   void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
+    if (_isLoading != loading) {
+      _isLoading = loading;
+      // Defer the notification to avoid calling setState during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    }
   }
 
   void _setError(String error) {
     _error = error;
-    notifyListeners();
+    // Defer notification to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 
   void _clearError() {
     _error = null;
-    notifyListeners();
+    // Defer notification to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 
   void _clearUserData() {
@@ -325,7 +354,10 @@ class UserService extends ChangeNotifier {
     _currentUser = null;
     _isLoading = false;
     _error = null;
-    notifyListeners();
+    // Defer notification to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 
   @override
