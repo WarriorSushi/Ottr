@@ -350,10 +350,17 @@ class UserService extends ChangeNotifier {
   }
 
   void _clearUserData() {
+    // Cancel all Firestore listeners
     _userSubscription?.cancel();
+    _userSubscription = null;
+    
+    // Clear all user data
     _currentUser = null;
     _isLoading = false;
     _error = null;
+    
+    print('UserService: All user data cleared and listeners canceled');
+    
     // Defer notification to avoid setState during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       notifyListeners();
