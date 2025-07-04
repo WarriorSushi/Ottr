@@ -69,7 +69,6 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
   };
 
   const handleConnectionDisconnected = (data) => {
-    console.log('Connection disconnected event received:', data);
     setIsConnected(false);
     Alert.alert(
       'Connection Ended',
@@ -77,10 +76,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
       [
         {
           text: 'OK',
-          onPress: () => {
-            console.log('User pressed OK, calling onDisconnect');
-            onDisconnect();
-          }
+          onPress: onDisconnect
         }
       ]
     );

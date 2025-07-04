@@ -104,12 +104,8 @@ export default function App() {
   };
 
   const handleDisconnect = async () => {
-    console.log('handleDisconnect called - clearing connection');
     setCurrentConnection(null);
     setInitialMessages([]);
-    
-    // Don't check for new connections - just go back to Connection screen
-    console.log('User should now see Connection screen');
   };
 
   const getCurrentScreen = () => {

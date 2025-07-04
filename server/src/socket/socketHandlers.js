@@ -244,20 +244,14 @@ const socketHandlers = (socket, io, db) => {
         if (connection && connection.status === 'connected') {
           const otherUserId = connection.user1_id === currentUser.id ? connection.user2_id : connection.user1_id;
           
-          // Automatically disconnect the connection
-          dbHelpers.updateConnectionStatus.run('disconnected', currentConnectionId);
-          
-          // Clear users' current connection
-          dbHelpers.updateUserConnection.run(null, connection.user1_id);
-          dbHelpers.updateUserConnection.run(null, connection.user2_id);
-          
-          // Notify the other user that connection has been ended
-          io.to(`user_${otherUserId}`).emit('connection_disconnected', {
-            message: `${currentUser.username} disconnected. Connection ended.`,
-            disconnectedBy: currentUser.username
+          // DON'T automatically disconnect the connection - keep it alive
+          // Just notify the other user that this user went offline
+          io.to(`user_${otherUserId}`).emit('user_offline', {
+            userId: currentUser.id,
+            username: currentUser.username
           });
           
-          console.log(`User ${currentUser.username} disconnected - connection ${currentConnectionId} automatically ended`);
+          console.log(`User ${currentUser.username} went offline - connection ${currentConnectionId} remains active`);
         }
       }
 
