@@ -59,6 +59,7 @@ export const lightTheme = {
   // Special effects
   blurTint: 'rgba(255,255,255,0.9)',
   glassBg: 'rgba(255,255,255,0.15)',
+  sectionBg: '#f1f5f9', // Light grey for sections in light mode
 };
 
 export const darkTheme = {
@@ -108,6 +109,7 @@ export const darkTheme = {
   // Special effects
   blurTint: 'rgba(30,41,59,0.9)',
   glassBg: 'rgba(30,41,59,0.3)',
+  sectionBg: '#334155', // Darker grey for sections in dark mode
 };
 
 export const ThemeProvider = ({ children }) => {

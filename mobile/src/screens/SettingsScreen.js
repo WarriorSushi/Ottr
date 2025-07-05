@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWallpaper, wallpapers } from '../contexts/WallpaperContext';
@@ -95,7 +94,7 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Theme Section */}
-          <BlurView intensity={20} style={[styles.section, { backgroundColor: theme.glassBg }]}>
+          <View style={[styles.section, { backgroundColor: theme.sectionBg }]}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
               Appearance
             </Text>
@@ -122,10 +121,10 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
                 ios_backgroundColor={theme.border}
               />
             </View>
-          </BlurView>
+          </View>
 
           {/* Wallpaper Section */}
-          <BlurView intensity={20} style={[styles.section, { backgroundColor: theme.glassBg }]}>
+          <View style={[styles.section, { backgroundColor: theme.sectionBg }]}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
               Chat Wallpaper
             </Text>
@@ -160,10 +159,10 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
                 );
               })}
             </View>
-          </BlurView>
+          </View>
 
           {/* Chat Info Section */}
-          <BlurView intensity={20} style={[styles.section, { backgroundColor: theme.glassBg }]}>
+          <View style={[styles.section, { backgroundColor: theme.sectionBg }]}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
               Current Chat
             </Text>
@@ -195,10 +194,10 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
                 </View>
               </View>
             </View>
-          </BlurView>
+          </View>
 
           {/* About Section */}
-          <BlurView intensity={20} style={[styles.section, { backgroundColor: theme.glassBg }]}>
+          <View style={[styles.section, { backgroundColor: theme.sectionBg }]}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
               About OTTR
             </Text>
@@ -216,10 +215,10 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
                 </View>
               </View>
             </View>
-          </BlurView>
+          </View>
 
           {/* Danger Zone */}
-          <BlurView intensity={20} style={[styles.section, { backgroundColor: theme.glassBg }]}>
+          <View style={[styles.section, { backgroundColor: theme.sectionBg }]}>
             <Text style={[styles.sectionTitle, { color: theme.error }]}>
               Danger Zone
             </Text>
@@ -241,7 +240,7 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
                 </View>
               </LinearGradient>
             </TouchableOpacity>
-          </BlurView>
+          </View>
 
           {/* Bottom spacing */}
           <View style={{ height: 30 }} />
