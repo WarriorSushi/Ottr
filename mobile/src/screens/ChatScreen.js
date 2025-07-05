@@ -29,9 +29,16 @@ import { useWallpaper } from '../contexts/WallpaperContext';
 const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) => {
   const { theme, isDark } = useTheme();
   const { getCurrentWallpaper } = useWallpaper();
-  const currentWallpaper = getCurrentWallpaper(isDark);
+  const [currentWallpaper, setCurrentWallpaper] = useState(getCurrentWallpaper(isDark));
   
   console.log('🖼️ ChatScreen wallpaper:', currentWallpaper?.name || 'No wallpaper');
+  
+  // Update wallpaper when theme changes
+  useEffect(() => {
+    const newWallpaper = getCurrentWallpaper(isDark);
+    setCurrentWallpaper(newWallpaper);
+    console.log('🎨 ChatScreen: Theme changed, updating wallpaper to:', newWallpaper?.name || 'No wallpaper');
+  }, [isDark, getCurrentWallpaper]);
   const [messages, setMessages] = useState(initialMessages);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -343,10 +350,10 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
         >
             <View style={styles.headerContent}>
               <View style={styles.headerLeft}>
-                <Text style={styles.headerTitle}>{otherUser.username}</Text>
+                <Text style={[styles.headerTitle, { color: theme.headerText }]}>{otherUser.username}</Text>
                 <View style={styles.statusContainer}>
                   <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-                  <Text style={styles.headerStatus}>
+                  <Text style={[styles.headerStatus, { color: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.7)' }]}>
                     {getConnectionStatus()}
                   </Text>
                 </View>
@@ -355,7 +362,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
                 style={styles.settingsButton}
                 onPress={openSettings}
               >
-                <View style={styles.settingsButtonBlur}>
+                <View style={[styles.settingsButtonBlur, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }]}>
                   <Text style={styles.settingsButtonText}>⚙️</Text>
                 </View>
               </TouchableOpacity>
@@ -481,7 +488,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ffffff',
   },
   statusContainer: {
     flexDirection: 'row',
@@ -496,7 +502,6 @@ const styles = StyleSheet.create({
   },
   headerStatus: {
     fontSize: 10,
-    color: 'rgba(255,255,255,0.9)',
     fontWeight: '400',
   },
   settingsButton: {
@@ -506,7 +511,6 @@ const styles = StyleSheet.create({
   settingsButtonBlur: {
     padding: 8,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   settingsButtonText: {
     fontSize: 18,
@@ -523,7 +527,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
     borderRadius: 16,
-    margin: 8,
+    marginHorizontal: 8,
+    marginTop: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -532,9 +537,9 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
   textInputContainer: {
     flex: 1,
@@ -582,7 +587,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#ffffff',
     fontWeight: 'bold',
-    transform: [{ rotate: '360deg' }],
+    transform: [{ rotate: '-90deg' }],
   },
   typingIndicatorContainer: {
     marginVertical: 8,

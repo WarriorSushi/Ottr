@@ -23,7 +23,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
           colors={theme.myMessageBg}
           start={[0, 0]}
           end={[1, 1]}
-          style={[styles.bubble, styles.ownMessageBubble]}
+          style={[styles.bubble, styles.ownMessageBubble, { borderWidth: 1, borderColor: theme.myMessageBorder }]}
         >
           {/* Removed sender name for cleaner look */}
           

@@ -89,14 +89,16 @@ export const WallpaperProvider = ({ children }) => {
     };
   }, []);
 
-  // Auto-change wallpaper when theme changes (if user hasn't set custom wallpaper)
+  // Auto-change wallpaper when theme changes
   useEffect(() => {
-    if (!userHasCustomWallpaper && !isLoading) {
+    if (!isLoading) {
       console.log('🎨 Theme changed, auto-updating wallpaper to:', isDark ? 'Cosmic Whisper' : 'Nimbusglow Light Default');
       const defaultWallpaper = getDefaultWallpaper(isDark);
       setCurrentWallpaper(defaultWallpaper);
+      // Reset custom wallpaper flag since we're auto-switching
+      setUserHasCustomWallpaper(false);
     }
-  }, [isDark, userHasCustomWallpaper, isLoading]);
+  }, [isDark, isLoading]);
 
   const loadWallpaperPreference = async () => {
     try {

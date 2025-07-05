@@ -39,14 +39,15 @@ export const lightTheme = {
   info: '#06b6d4',
   
   // Chat specific
-  myMessageBg: ['#6EE7B7', '#34D399'], // Fresh Mint Green Gradient
+  myMessageBg: ['#e2f5ff', '#e2f5ff'], // Light Blue Solid
+  myMessageBorder: '#d4edff', // Slightly darker blue border
   otherMessageBg: ['#ffffff', '#f3f4f6'], // White to Misty Gray Gradient
   inputBg: '#ffffff',
   inputBorder: '#e2e8f0',
   
   // Navigation & Headers
-  headerBg: ['#1e293b', '#0f172a'],
-  headerText: '#ffffff',
+  headerBg: ['#f8fafc', '#e2e8f0'], // Light and bright gradient
+  headerText: '#000000',
   
   // Borders & Dividers
   border: '#e2e8f0',
@@ -90,12 +91,13 @@ export const darkTheme = {
   
   // Chat specific
   myMessageBg: ['#8B5CF6', '#7C3AED'], // Royal Purple Gradient
+  myMessageBorder: '#7C3AED', // Slightly darker purple border
   otherMessageBg: ['#1f2937', '#111827'], // Deep Slate Black Gradient
   inputBg: '#334155',
   inputBorder: '#475569',
   
   // Navigation & Headers
-  headerBg: ['#1e293b', '#0f172a'],
+  headerBg: ['#374151', '#1f2937'], // Dark and mild gradient
   headerText: '#f8fafc',
   
   // Borders & Dividers
