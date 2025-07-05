@@ -9,8 +9,8 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
   const { theme, isDark } = useTheme();
   
   const formatTime = (timestamp) => {
-    // Use current phone time instead of message timestamp for real-time display
-    const date = new Date();
+    // Use the actual message timestamp when it was sent
+    const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
