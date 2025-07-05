@@ -90,9 +90,9 @@ export const darkTheme = {
   info: '#22d3ee',
   
   // Chat specific
-  myMessageBg: ['#8B5CF6', '#7C3AED'], // Royal Purple Gradient
+  myMessageBg: ['#8B5CF6', '#6D28D9'], // Purple gradient from current to darker
   myMessageBorder: '#7C3AED', // Slightly darker purple border
-  otherMessageBg: ['#1f2937', '#111827'], // Deep Slate Black Gradient
+  otherMessageBg: ['#374151', '#1f2937'], // Lighter slate gradient at 135 degrees
   inputBg: '#334155',
   inputBorder: '#475569',
   

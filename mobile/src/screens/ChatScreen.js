@@ -272,14 +272,22 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
 
   const renderMessage = ({ item, index }) => {
     const isOwnMessage = item.sender_id === user.id;
+    const reversedMessages = [...messages].reverse();
+    
+    // For inverted list, check the next message (which appears above this one)
+    const nextMessage = index < reversedMessages.length - 1 ? reversedMessages[index + 1] : null;
+    const isNextMessageFromSameSender = nextMessage && nextMessage.sender_id === item.sender_id;
+    const extraSpacing = isNextMessageFromSameSender ? 0 : 1; // Double spacing for sender change
+    
     const showUsername = !isOwnMessage && 
-      (index === 0 || messages[index - 1].sender_id !== item.sender_id);
+      (index === reversedMessages.length - 1 || !isNextMessageFromSameSender);
     
     return (
       <MessageBubble
         message={item}
         isOwnMessage={isOwnMessage}
         showUsername={showUsername}
+        extraSpacing={extraSpacing}
       />
     );
   };
