@@ -282,7 +282,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
 
         <KeyboardAvoidingView 
           style={styles.chatContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
           keyboardVerticalOffset={0}
         >
           <FlatList
