@@ -12,7 +12,6 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentConnection, setCurrentConnection] = useState(null);
   const [initialMessages, setInitialMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
   const fadeAnim = new Animated.Value(0);
 
@@ -41,7 +40,7 @@ export default function App() {
       if (userData) {
         setCurrentUser(userData);
         
-        // Connect to socket and wait for connection
+        // Connect to socket and wait for connection (async, non-blocking)
         SocketService.connect();
         
         // Set up a listener to join user room once connected
@@ -67,28 +66,31 @@ export default function App() {
           });
         }
         
-        const connectionData = await ApiService.getCurrentConnection(userData.id);
-        if (connectionData.connection) {
-          setCurrentConnection(connectionData.connection);
-          setInitialMessages(connectionData.recent_messages || []);
-        }
+        // Load connection data in background without blocking UI
+        ApiService.getCurrentConnection(userData.id)
+          .then(connectionData => {
+            if (connectionData.connection) {
+              setCurrentConnection(connectionData.connection);
+              setInitialMessages(connectionData.recent_messages || []);
+            }
+          })
+          .catch(error => {
+            console.error('Error loading connection data:', error);
+          });
       }
     } catch (error) {
       console.error('Error initializing app:', error);
-      Alert.alert('Error', 'Failed to initialize app. Please restart.');
-    } finally {
-      setIsLoading(false);
+      // Don't show alert during initialization for better UX
     }
   };
 
   const handleUserRegistered = async (user, connection) => {
     try {
       console.log('handleUserRegistered called');
-      setIsLoading(true);
       
       setCurrentUser(user);
       
-      // Connect to socket and wait for connection
+      // Connect to socket (async, non-blocking)
       SocketService.connect();
       
       // Set up a listener to join user room once connected
@@ -119,14 +121,8 @@ export default function App() {
         setInitialMessages([]);
       }
       
-      // Small delay to ensure state updates are processed
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 100);
-      
     } catch (error) {
       console.error('Error in handleUserRegistered:', error);
-      setIsLoading(false);
       Alert.alert('Error', 'Failed to process user registration. Please try again.');
     }
   };
@@ -139,19 +135,12 @@ export default function App() {
   const handleDisconnect = async () => {
     try {
       console.log('handleDisconnect called');
-      setIsLoading(true);
       
       setCurrentConnection(null);
       setInitialMessages([]);
       
-      // Small delay to ensure clean transition
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 100);
-      
     } catch (error) {
       console.error('Error in handleDisconnect:', error);
-      setIsLoading(false);
     }
   };
 
@@ -185,16 +174,6 @@ export default function App() {
     return <SplashScreen onSplashComplete={handleSplashComplete} />;
   }
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <View style={styles.loadingContent}>
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -212,20 +191,6 @@ const styles = StyleSheet.create({
   },
   screenContainer: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingContent: {
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#64748b',
-    fontWeight: '500',
   },
 });
 
