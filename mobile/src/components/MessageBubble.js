@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
   const formatTime = (timestamp) => {
@@ -12,36 +14,43 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
       styles.container,
       isOwnMessage ? styles.ownMessageContainer : styles.otherMessageContainer
     ]}>
-      <View style={[
-        styles.bubble,
-        isOwnMessage ? styles.ownMessageBubble : styles.otherMessageBubble
-      ]}>
-        {showUsername && !isOwnMessage && (
-          <Text style={styles.username}>{message.sender_username}</Text>
-        )}
-        
-        <Text style={[
-          styles.messageText,
-          isOwnMessage ? styles.ownMessageText : styles.otherMessageText
-        ]}>
-          {message.content}
-        </Text>
-        
-        <Text style={[
-          styles.timestamp,
-          isOwnMessage ? styles.ownTimestamp : styles.otherTimestamp
-        ]}>
-          {formatTime(message.timestamp)}
-        </Text>
-      </View>
+      {isOwnMessage ? (
+        <View style={[styles.bubble, styles.ownMessageBubble, { backgroundColor: '#F8B647' }]}>
+          {showUsername && !isOwnMessage && (
+            <Text style={styles.username}>{message.sender_username}</Text>
+          )}
+          
+          <Text style={[styles.messageText, styles.ownMessageText]}>
+            {message.content}
+          </Text>
+          
+          <Text style={[styles.timestamp, styles.ownTimestamp]}>
+            {formatTime(message.timestamp)}
+          </Text>
+        </View>
+      ) : (
+        <View style={[styles.bubble, styles.otherMessageBubble, { backgroundColor: '#8B4A27' }]}>
+          {showUsername && (
+            <Text style={styles.username}>{message.sender_username}</Text>
+          )}
+          
+          <Text style={[styles.messageText, styles.otherMessageText]}>
+            {message.content}
+          </Text>
+          
+          <Text style={[styles.timestamp, styles.otherTimestamp]}>
+            {formatTime(message.timestamp)}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 2,
-    marginHorizontal: 16,
+    marginVertical: 4,
+    marginHorizontal: 20,
   },
   ownMessageContainer: {
     alignItems: 'flex-end',
@@ -50,46 +59,51 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   bubble: {
-    maxWidth: '80%',
+    maxWidth: '85%',
+    borderRadius: 18,
+    overflow: 'hidden',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 20,
-    position: 'relative',
   },
   ownMessageBubble: {
-    backgroundColor: '#007bff',
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 6,
   },
   otherMessageBubble: {
-    backgroundColor: '#f1f3f4',
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 6,
   },
   username: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#666',
-    marginBottom: 2,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 3,
   },
   messageText: {
-    fontSize: 16,
+    fontSize: 14,
     lineHeight: 20,
     marginBottom: 4,
+    fontWeight: '400',
   },
   ownMessageText: {
-    color: 'white',
+    color: '#1E1E1E',
   },
   otherMessageText: {
-    color: '#000',
+    color: '#FFFFFF',
   },
   timestamp: {
-    fontSize: 11,
+    fontSize: 10,
     alignSelf: 'flex-end',
+    fontWeight: '400',
   },
   ownTimestamp: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(30, 30, 30, 0.7)',
   },
   otherTimestamp: {
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
 });
 

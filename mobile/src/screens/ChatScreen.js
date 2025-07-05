@@ -9,8 +9,14 @@ import {
   KeyboardAvoidingView, 
   Platform, 
   Alert,
-  Modal 
+  Modal,
+  Dimensions,
+  StatusBar,
+  Keyboard
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import MessageBubble from '../components/MessageBubble';
 import SocketService from '../services/SocketService';
 import ApiService from '../services/ApiService';
@@ -33,6 +39,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
 
   useEffect(() => {
     setupSocketListeners();
+    setupKeyboardListeners();
     
     return () => {
       SocketService.off('message_received', handleNewMessage);
@@ -46,6 +53,16 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     };
   }, []);
 
+  // Auto-scroll to top (latest message) when messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      // For inverted list, scroll to top shows latest message
+      setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }, 50);
+    }
+  }, [messages.length]);
+
   const setupSocketListeners = () => {
     SocketService.on('message_received', handleNewMessage);
     SocketService.on('typing_indicator', handleTypingIndicator);
@@ -53,12 +70,51 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     SocketService.on('user_status_changed', handleUserStatusChanged);
   };
 
+  const setupKeyboardListeners = () => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      // Auto-scroll when keyboard opens
+      setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }, 100);
+    });
+    
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      // Auto-scroll when keyboard closes
+      setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }, 100);
+    });
+    
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  };
+
+
+
   const handleNewMessage = (message) => {
     if (message.connection_id === connection.id) {
-      setMessages(prev => [...prev, message]);
+      // Check for duplicates before adding
+      setMessages(prev => {
+        const isDuplicate = prev.some(msg => 
+          msg.id === message.id || 
+          (msg.content === message.content && 
+           msg.sender_id === message.sender_id && 
+           Math.abs(new Date(msg.timestamp) - new Date(message.timestamp)) < 1000)
+        );
+        
+        if (isDuplicate) {
+          return prev;
+        }
+        
+        return [...prev, message];
+      });
+      
+      // Auto-scroll to top (latest message) for inverted list
       setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }, 50);
     }
   };
 
@@ -100,8 +156,12 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     const success = SocketService.sendMessage(messageData);
     
     if (success) {
+      // Clear input immediately for better UX
       setInputText('');
       handleStopTyping();
+      
+      // Don't add message locally - let it come back from server to prevent duplicates
+      // Auto-scroll will happen when server message is received
     } else {
       Alert.alert('Error', 'Failed to send message. Please check your connection.');
     }
@@ -190,210 +250,309 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>{otherUser.username}</Text>
-          <Text style={[styles.headerStatus, { color: getStatusColor() }]}>
-            {getConnectionStatus()}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.settingsButton}
-          onPress={() => setShowSettingsModal(true)}
-        >
-          <Text style={styles.settingsButtonText}>⚙️</Text>
-        </TouchableOpacity>
-      </View>
-
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item, index) => `${item.id || index}`}
-        style={styles.messagesList}
-        contentContainerStyle={styles.messagesContainer}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-      />
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          value={inputText}
-          onChangeText={handleInputChange}
-          placeholder="Type a message..."
-          placeholderTextColor="#999"
-          multiline
-          maxLength={1000}
-          editable={isConnected}
-          onSubmitEditing={sendMessage}
-          returnKeyType="send"
-        />
-        <TouchableOpacity
-          style={[
-            styles.sendButton,
-            (!inputText.trim() || !isConnected) && styles.sendButtonDisabled
-          ]}
-          onPress={sendMessage}
-          disabled={!inputText.trim() || !isConnected}
-        >
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Modal
-        visible={showSettingsModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowSettingsModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Settings</Text>
-            
-            <TouchableOpacity
-              style={styles.disconnectButton}
-              onPress={() => {
-                setShowSettingsModal(false);
-                handleDisconnect();
-              }}
-            >
-              <Text style={styles.disconnectButtonText}>End Connection</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowSettingsModal(false)}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar barStyle="dark-content" backgroundColor="#4DD3F4" translucent={false} />
+        
+        {/* Crystal Aqua Background */}
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#A8E6FF' }]} />
+        
+        {/* Solid Header */}
+        <View style={styles.header}>
+            <View style={styles.headerContent}>
+              <View style={styles.headerLeft}>
+                <Text style={styles.headerTitle}>{otherUser.username}</Text>
+                <View style={styles.statusContainer}>
+                  <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
+                  <Text style={styles.headerStatus}>
+                    {getConnectionStatus()}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.settingsButton}
+                onPress={() => setShowSettingsModal(true)}
+              >
+                <View style={styles.settingsButtonBlur}>
+                  <Text style={styles.settingsButtonText}>⚙️</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
-    </KeyboardAvoidingView>
+
+        <KeyboardAvoidingView 
+          style={styles.chatContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <FlatList
+            ref={flatListRef}
+            data={[...messages].reverse()}
+            renderItem={renderMessage}
+            keyExtractor={(item, index) => `${item.id || index}`}
+            style={styles.messagesList}
+            contentContainerStyle={styles.messagesContainer}
+            inverted
+            showsVerticalScrollIndicator={false}
+            keyboardDismissMode="interactive"
+            keyboardShouldPersistTaps="handled"
+          />
+
+          {/* Input Container */}
+          <SafeAreaView style={styles.inputContainer} edges={['bottom']}>
+            <View style={styles.inputWrapper}>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={inputText}
+                    onChangeText={handleInputChange}
+                    placeholder="Type a message..."
+                    placeholderTextColor="rgba(51,51,51,0.6)"
+                    multiline
+                    maxLength={1000}
+                    editable={isConnected}
+                    onSubmitEditing={sendMessage}
+                    returnKeyType="send"
+                  />
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.sendButton,
+                    (!inputText.trim() || !isConnected) && styles.sendButtonDisabled
+                  ]}
+                  onPress={sendMessage}
+                  disabled={!inputText.trim() || !isConnected}
+                >
+                  <LinearGradient
+                    colors={inputText.trim() && isConnected ? ['#F8B647', '#E89E34'] : ['#ccc', '#aaa']}
+                    style={styles.sendButtonGradient}
+                  >
+                    <Text style={styles.sendButtonText}>✈</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
+
+        {/* Glass Modal */}
+        <Modal
+          visible={showSettingsModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowSettingsModal(false)}
+        >
+          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Settings</Text>
+                
+                <TouchableOpacity
+                  style={styles.disconnectButton}
+                  onPress={() => {
+                    setShowSettingsModal(false);
+                    handleDisconnect();
+                  }}
+                >
+                  <LinearGradient
+                    colors={['#F8B647', '#E89E34']}
+                    style={styles.buttonGradient}
+                  >
+                    <Text style={styles.disconnectButtonText}>End Connection</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowSettingsModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
+
+const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#A8E6FF',
+  },
+  chatContainer: {
+    flex: 1,
   },
   header: {
+    backgroundColor: '#8B4A27',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+    zIndex: 1000,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#f8f9fa',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    paddingVertical: 8,
+    paddingTop: 12,
   },
   headerLeft: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#000',
+    color: '#FFFFFF',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
   },
   headerStatus: {
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '400',
   },
   settingsButton: {
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  settingsButtonBlur: {
     padding: 8,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   settingsButtonText: {
-    fontSize: 20,
+    fontSize: 18,
   },
   messagesList: {
     flex: 1,
   },
   messagesContainer: {
-    paddingVertical: 8,
+    paddingVertical: 16,
+    flexGrow: 1,
   },
   inputContainer: {
+    backgroundColor: '#FFFDF8',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#f8f9fa',
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
+    paddingVertical: 8,
+  },
+  textInputContainer: {
+    flex: 1,
+    backgroundColor: '#FFFDF8',
+    borderRadius: 20,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
   },
   textInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginRight: 12,
-    backgroundColor: 'white',
-    maxHeight: 100,
-    fontSize: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    maxHeight: 80,
+    fontSize: 14,
+    color: '#333333',
+    fontWeight: '400',
   },
   sendButton: {
-    backgroundColor: '#007bff',
-    borderRadius: 20,
+    borderRadius: 25,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  sendButtonGradient: {
     paddingHorizontal: 20,
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 50,
+    minHeight: 50,
   },
   sendButtonDisabled: {
-    backgroundColor: '#6c757d',
+    opacity: 0.6,
   },
   sendButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    transform: [{ rotate: '360deg' }],
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  modalContainer: {
+    width: '85%',
+    maxWidth: 320,
+  },
   modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 24,
-    width: '80%',
-    maxWidth: 300,
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    backgroundColor: '#FFFDF8',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 25,
+    color: '#1E1E1E',
   },
   disconnectButton: {
-    backgroundColor: '#dc3545',
-    borderRadius: 8,
+    width: '100%',
+    borderRadius: 15,
+    overflow: 'hidden',
+    marginBottom: 15,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  buttonGradient: {
     padding: 16,
     alignItems: 'center',
-    marginBottom: 12,
   },
   disconnectButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
+    color: '#1E1E1E',
+    fontWeight: '700',
+    fontSize: 15,
   },
   cancelButton: {
-    backgroundColor: '#6c757d',
-    borderRadius: 8,
+    backgroundColor: 'rgba(51,51,51,0.1)',
+    borderRadius: 15,
     padding: 16,
     alignItems: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.2)',
   },
   cancelButtonText: {
-    color: 'white',
+    color: '#1E1E1E',
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 15,
   },
 });
 
