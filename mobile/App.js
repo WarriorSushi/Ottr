@@ -13,6 +13,8 @@ export default function App() {
   const [currentConnection, setCurrentConnection] = useState(null);
   const [initialMessages, setInitialMessages] = useState([]);
   const [showSplash, setShowSplash] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState("Connecting you to your OTTR");
   const fadeAnim = new Animated.Value(0);
 
   useEffect(() => {
@@ -30,7 +32,10 @@ export default function App() {
   }, [showSplash]);
 
   const handleSplashComplete = () => {
-    setShowSplash(false);
+    console.log('🎭 Splash completed, isLoading:', isLoading);
+    if (!isLoading) {
+      setShowSplash(false);
+    }
   };
 
   const initializeApp = async () => {
@@ -86,7 +91,13 @@ export default function App() {
 
   const handleUserRegistered = async (user, connection) => {
     try {
-      console.log('handleUserRegistered called');
+      console.log('🎬 handleUserRegistered called - Starting beautiful loading animation');
+      
+      // Show beautiful loading animation
+      setLoadingText("Connecting you to your OTTR");
+      console.log('🔄 Setting isLoading to true, loadingText:', "Connecting you to your OTTR");
+      setIsLoading(true);
+      setShowSplash(true);
       
       setCurrentUser(user);
       
@@ -100,6 +111,12 @@ export default function App() {
           username: user.username
         });
         SocketService.off('connection_status', handleConnection);
+        
+        // Transition to next screen after connection
+        setTimeout(() => {
+          setIsLoading(false);
+          setShowSplash(false);
+        }, 1500);
       };
       
       SocketService.on('connection_status', (status) => {
@@ -114,6 +131,10 @@ export default function App() {
           userId: user.id,
           username: user.username
         });
+        setTimeout(() => {
+          setIsLoading(false);
+          setShowSplash(false);
+        }, 1500);
       }
       
       if (connection) {
@@ -123,13 +144,26 @@ export default function App() {
       
     } catch (error) {
       console.error('Error in handleUserRegistered:', error);
+      setIsLoading(false);
+      setShowSplash(false);
       Alert.alert('Error', 'Failed to process user registration. Please try again.');
     }
   };
 
   const handleConnectionEstablished = (connection, messages = []) => {
+    // Show loading animation for connection establishment
+    setLoadingText("Opening your chat");
+    setIsLoading(true);
+    setShowSplash(true);
+    
     setCurrentConnection(connection);
     setInitialMessages(messages);
+    
+    // Smooth transition to chat
+    setTimeout(() => {
+      setIsLoading(false);
+      setShowSplash(false);
+    }, 1200);
   };
 
   const handleDisconnect = async () => {
@@ -171,7 +205,13 @@ export default function App() {
   };
 
   if (showSplash) {
-    return <SplashScreen onSplashComplete={handleSplashComplete} />;
+    return (
+      <SplashScreen 
+        onSplashComplete={handleSplashComplete} 
+        isLoading={isLoading}
+        loadingText={loadingText}
+      />
+    );
   }
 
   return (

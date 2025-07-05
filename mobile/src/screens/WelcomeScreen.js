@@ -12,6 +12,7 @@ const WelcomeScreen = ({ onUserRegistered }) => {
 
   const handleUsernameSubmit = async (username) => {
     setIsLoading(true);
+    console.log('🚀 WelcomeScreen: Starting username submission for:', username);
     
     try {
       const usernameCheck = await ApiService.checkUsername(username);
@@ -25,6 +26,7 @@ const WelcomeScreen = ({ onUserRegistered }) => {
           created_at: loginResult.user.created_at
         });
         
+        console.log('🎯 WelcomeScreen: Calling onUserRegistered for existing user');
         onUserRegistered(loginResult.user, loginResult.currentConnection);
       } else {
         const registerResult = await ApiService.register(username);
@@ -35,6 +37,7 @@ const WelcomeScreen = ({ onUserRegistered }) => {
           created_at: registerResult.user.created_at
         });
         
+        console.log('🎯 WelcomeScreen: Calling onUserRegistered for new user');
         onUserRegistered(registerResult.user, null);
       }
     } catch (error) {

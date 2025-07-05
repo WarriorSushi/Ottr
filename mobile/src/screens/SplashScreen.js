@@ -5,40 +5,123 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import LottieView from 'lottie-react-native';
 
-const SplashScreen = ({ onSplashComplete }) => {
-  const logoScale = new Animated.Value(0);
+const SplashScreen = ({ onSplashComplete, isLoading = false, loadingText = "Connecting you to your OTTR" }) => {
+  const logoScale = new Animated.Value(isLoading ? 0.5 : 0.3);
   const logoOpacity = new Animated.Value(0);
   const textOpacity = new Animated.Value(0);
+  const logoZoom = new Animated.Value(1);
+  const loadingTextOpacity = new Animated.Value(0);
+  const pulseScale = new Animated.Value(1);
 
   useEffect(() => {
-    // Animate logo appearance
-    Animated.sequence([
-      Animated.parallel([
-        Animated.timing(logoScale, {
+    console.log('SplashScreen useEffect triggered, isLoading:', isLoading);
+    
+    if (isLoading) {
+      // Reset all values first
+      logoOpacity.setValue(0);
+      logoScale.setValue(0.5);
+      textOpacity.setValue(0);
+      loadingTextOpacity.setValue(0);
+      logoZoom.setValue(1);
+      pulseScale.setValue(1);
+      
+      // Beautiful loading animation sequence
+      const loadingSequence = Animated.sequence([
+        // 1. Logo appears and scales up
+        Animated.parallel([
+          Animated.timing(logoOpacity, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(logoScale, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]),
+        // 2. Brand text appears
+        Animated.timing(textOpacity, {
           toValue: 1,
-          duration: 800,
+          duration: 600,
           useNativeDriver: true,
         }),
-        Animated.timing(logoOpacity, {
+        // 3. Loading text appears
+        Animated.timing(loadingTextOpacity, {
           toValue: 1,
-          duration: 800,
+          duration: 600,
           useNativeDriver: true,
         }),
-      ]),
-      Animated.timing(textOpacity, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
+        // 4. Dramatic zoom effect
+        Animated.timing(logoZoom, {
+          toValue: 4,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ]);
 
-    // Auto-complete splash after 3 seconds
-    const timer = setTimeout(() => {
-      onSplashComplete();
-    }, 3000);
+      // Start the sequence
+      loadingSequence.start();
 
-    return () => clearTimeout(timer);
-  }, []);
+      // Continuous pulse effect during loading
+      const pulseAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseScale, {
+            toValue: 1.15,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseScale, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseAnimation.start();
+
+      return () => {
+        loadingSequence.stop();
+        pulseAnimation.stop();
+      };
+    } else {
+      // Reset all values for normal splash
+      logoOpacity.setValue(0);
+      logoScale.setValue(0.3);
+      textOpacity.setValue(0);
+      loadingTextOpacity.setValue(0);
+      logoZoom.setValue(1);
+      pulseScale.setValue(1);
+      
+      // Normal splash animation
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(logoScale, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(logoOpacity, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.timing(textOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Auto-complete splash after 3 seconds
+      const timer = setTimeout(() => {
+        onSplashComplete();
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   return (
     <SafeAreaProvider>
@@ -52,23 +135,33 @@ const SplashScreen = ({ onSplashComplete }) => {
         />
         
         <View style={styles.content}>
-          {/* Logo with Animation */}
+          {/* Logo with Dynamic Animation */}
           <Animated.View 
             style={[
               styles.logoContainer,
               {
-                transform: [{ scale: logoScale }],
+                transform: [
+                  { scale: logoScale },
+                  { scaleX: logoZoom },
+                  { scaleY: logoZoom }
+                ],
                 opacity: logoOpacity,
               }
             ]}
           >
-            <BlurView intensity={30} style={styles.logoBlur}>
-              <Image 
-                source={require('../../assets/images/logo-main.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </BlurView>
+            <Animated.View
+              style={{
+                transform: [{ scale: pulseScale }]
+              }}
+            >
+              <BlurView intensity={30} style={styles.logoBlur}>
+                <Image 
+                  source={require('../../assets/images/logo-main.png')}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </BlurView>
+            </Animated.View>
           </Animated.View>
           
           {/* App Name and Tagline */}
@@ -83,16 +176,26 @@ const SplashScreen = ({ onSplashComplete }) => {
               <Text style={styles.tagline}>One-to-One Exclusive Messaging</Text>
             </BlurView>
           </Animated.View>
+
+          {/* Loading Text */}
+          {isLoading && (
+            <Animated.View 
+              style={[
+                styles.loadingTextContainer,
+                { opacity: loadingTextOpacity }
+              ]}
+            >
+              <BlurView intensity={25} style={styles.loadingTextBlur}>
+                <Text style={styles.loadingText}>{loadingText}</Text>
+                <View style={styles.loadingDots}>
+                  <Animated.Text style={[styles.dot, { opacity: pulseScale }]}>●</Animated.Text>
+                  <Animated.Text style={[styles.dot, { opacity: pulseScale }]}>●</Animated.Text>
+                  <Animated.Text style={[styles.dot, { opacity: pulseScale }]}>●</Animated.Text>
+                </View>
+              </BlurView>
+            </Animated.View>
+          )}
           
-          {/* Loading Animation */}
-          <View style={styles.loadingContainer}>
-            <LottieView
-              source={require('../../assets/animations/loading.json')}
-              autoPlay
-              loop
-              style={styles.loadingAnimation}
-            />
-          </View>
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -162,14 +265,38 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.5,
   },
-  loadingContainer: {
+  loadingTextContainer: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 120,
+    left: 0,
+    right: 0,
     alignItems: 'center',
   },
-  loadingAnimation: {
-    width: 40,
-    height: 40,
+  loadingTextBlur: {
+    paddingHorizontal: 30,
+    paddingVertical: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#1E1E1E',
+    textAlign: 'center',
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginBottom: 15,
+  },
+  loadingDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dot: {
+    fontSize: 20,
+    color: '#4DD3F4',
+    marginHorizontal: 3,
+    fontWeight: 'bold',
   },
 });
 

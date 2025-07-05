@@ -55,6 +55,7 @@ const UsernameInput = ({ onValidUsername, isLoading = false, placeholder = "Ente
       return;
     }
 
+    console.log('Username submit - triggering beautiful loading animation');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onValidUsername(username.trim());
   };
