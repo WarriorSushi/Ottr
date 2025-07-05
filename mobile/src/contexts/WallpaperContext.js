@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from './ThemeContext';
 
 const WallpaperContext = createContext();
 
@@ -52,7 +53,8 @@ export const wallpapers = {
     id: 'cosmic_whisper',
     name: 'Cosmic Whisper',
     image: require('../../assets/chatbg/cosmic_whisper.webp'),
-    isDefault: false
+    isDefault: true,
+    theme: 'dark'
   },
   night_grain: {
     id: 'night_grain',
@@ -70,12 +72,14 @@ export const wallpapers = {
 
 // Get default wallpaper for theme
 export const getDefaultWallpaper = (isDark) => {
-  return isDark ? wallpapers.obsidian_shade_dark_defualt : wallpapers.nimbusglow_light_defualt;
+  return isDark ? wallpapers.cosmic_whisper : wallpapers.nimbusglow_light_defualt;
 };
 
 export const WallpaperProvider = ({ children }) => {
+  const { isDark } = useTheme();
   const [currentWallpaper, setCurrentWallpaper] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userHasCustomWallpaper, setUserHasCustomWallpaper] = useState(false);
   const isMountedRef = useRef(true);
 
   useEffect(() => {
@@ -85,12 +89,27 @@ export const WallpaperProvider = ({ children }) => {
     };
   }, []);
 
+  // Auto-change wallpaper when theme changes (if user hasn't set custom wallpaper)
+  useEffect(() => {
+    if (!userHasCustomWallpaper && !isLoading) {
+      console.log('🎨 Theme changed, auto-updating wallpaper to:', isDark ? 'Cosmic Whisper' : 'Nimbusglow Light Default');
+      const defaultWallpaper = getDefaultWallpaper(isDark);
+      setCurrentWallpaper(defaultWallpaper);
+    }
+  }, [isDark, userHasCustomWallpaper, isLoading]);
+
   const loadWallpaperPreference = async () => {
     try {
       const savedWallpaper = await AsyncStorage.getItem('wallpaper_preference');
+      const hasCustomWallpaper = await AsyncStorage.getItem('has_custom_wallpaper');
+      
       if (savedWallpaper && isMountedRef.current) {
         const wallpaperData = JSON.parse(savedWallpaper);
         setCurrentWallpaper(wallpaperData);
+        setUserHasCustomWallpaper(hasCustomWallpaper === 'true');
+      } else {
+        // No saved wallpaper, use default
+        setUserHasCustomWallpaper(false);
       }
     } catch (error) {
       console.error('Error loading wallpaper preference:', error);
@@ -109,12 +128,16 @@ export const WallpaperProvider = ({ children }) => {
       if (!wallpaper) return;
 
       setCurrentWallpaper(wallpaper);
+      setUserHasCustomWallpaper(true); // User manually selected wallpaper
+      
+      console.log('🖼️ User manually selected wallpaper:', wallpaper.name);
       
       // Save to AsyncStorage
       setTimeout(async () => {
         if (!isMountedRef.current) return;
         try {
           await AsyncStorage.setItem('wallpaper_preference', JSON.stringify(wallpaper));
+          await AsyncStorage.setItem('has_custom_wallpaper', 'true');
         } catch (error) {
           console.error('Error saving wallpaper preference:', error);
         }
@@ -133,11 +156,25 @@ export const WallpaperProvider = ({ children }) => {
     return getDefaultWallpaper(isDark);
   };
 
+  const resetToAutoWallpaper = async () => {
+    try {
+      setUserHasCustomWallpaper(false);
+      setCurrentWallpaper(null);
+      await AsyncStorage.removeItem('wallpaper_preference');
+      await AsyncStorage.removeItem('has_custom_wallpaper');
+      console.log('🔄 Reset to auto wallpaper mode');
+    } catch (error) {
+      console.error('Error resetting wallpaper:', error);
+    }
+  };
+
   const value = {
     wallpapers,
     currentWallpaper,
     setWallpaper,
     getCurrentWallpaper,
+    resetToAutoWallpaper,
+    userHasCustomWallpaper,
     isLoading,
   };
 
