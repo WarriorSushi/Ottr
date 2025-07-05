@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 
 const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
   const formatTime = (timestamp) => {
@@ -15,7 +14,12 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
       isOwnMessage ? styles.ownMessageContainer : styles.otherMessageContainer
     ]}>
       {isOwnMessage ? (
-        <View style={[styles.bubble, styles.ownMessageBubble, { backgroundColor: '#F8B647' }]}>
+        <LinearGradient
+          colors={['#06b6d4', '#0891b2']}
+          start={[0, 0]}
+          end={[1, 1]}
+          style={[styles.bubble, styles.ownMessageBubble]}
+        >
           {showUsername && !isOwnMessage && (
             <Text style={styles.username}>{message.sender_username}</Text>
           )}
@@ -27,9 +31,14 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
           <Text style={[styles.timestamp, styles.ownTimestamp]}>
             {formatTime(message.timestamp)}
           </Text>
-        </View>
+        </LinearGradient>
       ) : (
-        <View style={[styles.bubble, styles.otherMessageBubble, { backgroundColor: '#8B4A27' }]}>
+        <LinearGradient
+          colors={['#6b7280', '#4b5563']}
+          start={[0, 0]}
+          end={[1, 1]}
+          style={[styles.bubble, styles.otherMessageBubble]}
+        >
           {showUsername && (
             <Text style={styles.username}>{message.sender_username}</Text>
           )}
@@ -41,7 +50,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
           <Text style={[styles.timestamp, styles.otherTimestamp]}>
             {formatTime(message.timestamp)}
           </Text>
-        </View>
+        </LinearGradient>
       )}
     </View>
   );
@@ -89,10 +98,10 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   ownMessageText: {
-    color: '#1E1E1E',
+    color: '#ffffff',
   },
   otherMessageText: {
-    color: '#FFFFFF',
+    color: '#ffffff',
   },
   timestamp: {
     fontSize: 10,
@@ -100,10 +109,10 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   ownTimestamp: {
-    color: 'rgba(30, 30, 30, 0.7)',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   otherTimestamp: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.8)',
   },
 });
 

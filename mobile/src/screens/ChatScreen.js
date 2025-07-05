@@ -252,13 +252,23 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#4DD3F4" translucent={false} />
+        <StatusBar barStyle="light-content" backgroundColor="#1e293b" translucent={false} />
         
-        {/* Crystal Aqua Background */}
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#A8E6FF' }]} />
+        {/* Chat Background Gradient */}
+        <LinearGradient
+          colors={['#f8fafc', '#e2e8f0']}
+          start={[0, 0]}
+          end={[1, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
         
-        {/* Solid Header */}
-        <View style={styles.header}>
+        {/* Header with Gradient */}
+        <LinearGradient
+          colors={['#1e293b', '#0f172a']}
+          start={[0, 0]}
+          end={[1, 1]}
+          style={styles.header}
+        >
             <View style={styles.headerContent}>
               <View style={styles.headerLeft}>
                 <Text style={styles.headerTitle}>{otherUser.username}</Text>
@@ -278,7 +288,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
                 </View>
               </TouchableOpacity>
             </View>
-          </View>
+          </LinearGradient>
 
         <KeyboardAvoidingView 
           style={styles.chatContainer}
@@ -307,7 +317,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
                     value={inputText}
                     onChangeText={handleInputChange}
                     placeholder="Type a message..."
-                    placeholderTextColor="rgba(51,51,51,0.6)"
+                    placeholderTextColor="#64748b"
                     multiline
                     maxLength={1000}
                     editable={isConnected}
@@ -324,7 +334,9 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
                   disabled={!inputText.trim() || !isConnected}
                 >
                   <LinearGradient
-                    colors={inputText.trim() && isConnected ? ['#F8B647', '#E89E34'] : ['#ccc', '#aaa']}
+                    colors={inputText.trim() && isConnected ? ['#3b82f6', '#8b5cf6'] : ['#ccc', '#aaa']}
+                    start={[0, 0]}
+                    end={[1, 1]}
                     style={styles.sendButtonGradient}
                   >
                     <Text style={styles.sendButtonText}>✈</Text>
@@ -354,7 +366,9 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
                   }}
                 >
                   <LinearGradient
-                    colors={['#F8B647', '#E89E34']}
+                    colors={['#ef4444', '#dc2626']}
+                    start={[0, 0]}
+                    end={[1, 1]}
                     style={styles.buttonGradient}
                   >
                     <Text style={styles.disconnectButtonText}>End Connection</Text>
@@ -381,13 +395,12 @@ const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#A8E6FF',
+    backgroundColor: '#f8fafc',
   },
   chatContainer: {
     flex: 1,
   },
   header: {
-    backgroundColor: '#8B4A27',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
     zIndex: 1000,
@@ -406,7 +419,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#ffffff',
   },
   statusContainer: {
     flexDirection: 'row',
@@ -421,7 +434,7 @@ const styles = StyleSheet.create({
   },
   headerStatus: {
     fontSize: 10,
-    color: 'rgba(255,255,255,0.8)',
+    color: 'rgba(255,255,255,0.9)',
     fontWeight: '400',
   },
   settingsButton: {
@@ -444,9 +457,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   inputContainer: {
-    backgroundColor: '#FFFDF8',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
+    borderTopColor: '#e2e8f0',
+    borderRadius: 16,
+    margin: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -456,18 +476,23 @@ const styles = StyleSheet.create({
   },
   textInputContainer: {
     flex: 1,
-    backgroundColor: '#FFFDF8',
-    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
+    borderColor: '#cbd5e1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   textInput: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     maxHeight: 80,
     fontSize: 14,
-    color: '#333333',
+    color: '#1e293b',
     fontWeight: '400',
   },
   sendButton: {
@@ -492,7 +517,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     fontSize: 18,
-    color: '#FFFFFF',
+    color: '#ffffff',
     fontWeight: 'bold',
     transform: [{ rotate: '360deg' }],
   },
@@ -509,16 +534,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 30,
     alignItems: 'center',
-    backgroundColor: '#FFFDF8',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 25,
-    color: '#1E1E1E',
+    color: '#1e293b',
   },
   disconnectButton: {
     width: '100%',
@@ -536,21 +566,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   disconnectButtonText: {
-    color: '#1E1E1E',
+    color: '#ffffff',
     fontWeight: '700',
     fontSize: 15,
   },
   cancelButton: {
-    backgroundColor: 'rgba(51,51,51,0.1)',
+    backgroundColor: '#f1f5f9',
     borderRadius: 15,
     padding: 16,
     alignItems: 'center',
     width: '100%',
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.2)',
+    borderColor: '#cbd5e1',
   },
   cancelButtonText: {
-    color: '#1E1E1E',
+    color: '#475569',
     fontWeight: '600',
     fontSize: 15,
   },

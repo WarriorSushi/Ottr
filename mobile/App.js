@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, StatusBar, Alert, AppRegistry } from 'react-native';
+import { View, StyleSheet, StatusBar, Alert, AppRegistry, Animated } from 'react-native';
+import SplashScreen from './src/screens/SplashScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import ConnectionScreen from './src/screens/ConnectionScreen';
 import ChatScreen from './src/screens/ChatScreen';
@@ -12,10 +13,26 @@ export default function App() {
   const [currentConnection, setCurrentConnection] = useState(null);
   const [initialMessages, setInitialMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+  const fadeAnim = new Animated.Value(0);
 
   useEffect(() => {
     initializeApp();
   }, []);
+
+  useEffect(() => {
+    if (!showSplash) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showSplash]);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
 
   const initializeApp = async () => {
     try {
@@ -134,6 +151,10 @@ export default function App() {
     );
   };
 
+  if (showSplash) {
+    return <SplashScreen onSplashComplete={handleSplashComplete} />;
+  }
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -145,7 +166,9 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      {getCurrentScreen()}
+      <Animated.View style={[styles.screenContainer, { opacity: fadeAnim }]}>
+        {getCurrentScreen()}
+      </Animated.View>
     </View>
   );
 }
@@ -154,6 +177,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  screenContainer: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
