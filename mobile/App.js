@@ -81,37 +81,53 @@ export default function App() {
     }
   };
 
-  const handleUserRegistered = (user, connection) => {
-    setCurrentUser(user);
-    
-    // Connect to socket and wait for connection
-    SocketService.connect();
-    
-    // Set up a listener to join user room once connected
-    const handleConnection = () => {
-      SocketService.joinUser({
-        userId: user.id,
-        username: user.username
+  const handleUserRegistered = async (user, connection) => {
+    try {
+      console.log('handleUserRegistered called');
+      setIsLoading(true);
+      
+      setCurrentUser(user);
+      
+      // Connect to socket and wait for connection
+      SocketService.connect();
+      
+      // Set up a listener to join user room once connected
+      const handleConnection = () => {
+        SocketService.joinUser({
+          userId: user.id,
+          username: user.username
+        });
+        SocketService.off('connection_status', handleConnection);
+      };
+      
+      SocketService.on('connection_status', (status) => {
+        if (status.connected) {
+          handleConnection();
+        }
       });
-      SocketService.off('connection_status', handleConnection);
-    };
-    
-    SocketService.on('connection_status', (status) => {
-      if (status.connected) {
-        handleConnection();
+      
+      // If already connected, join immediately
+      if (SocketService.getConnectionStatus().connected) {
+        SocketService.joinUser({
+          userId: user.id,
+          username: user.username
+        });
       }
-    });
-    
-    // If already connected, join immediately
-    if (SocketService.getConnectionStatus().connected) {
-      SocketService.joinUser({
-        userId: user.id,
-        username: user.username
-      });
-    }
-    
-    if (connection) {
-      setCurrentConnection(connection);
+      
+      if (connection) {
+        setCurrentConnection(connection);
+        setInitialMessages([]);
+      }
+      
+      // Small delay to ensure state updates are processed
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error in handleUserRegistered:', error);
+      setIsLoading(false);
+      Alert.alert('Error', 'Failed to process user registration. Please try again.');
     }
   };
 
@@ -121,8 +137,22 @@ export default function App() {
   };
 
   const handleDisconnect = async () => {
-    setCurrentConnection(null);
-    setInitialMessages([]);
+    try {
+      console.log('handleDisconnect called');
+      setIsLoading(true);
+      
+      setCurrentConnection(null);
+      setInitialMessages([]);
+      
+      // Small delay to ensure clean transition
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error in handleDisconnect:', error);
+      setIsLoading(false);
+    }
   };
 
   const getCurrentScreen = () => {
@@ -158,7 +188,9 @@ export default function App() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        {/* You could add a loading spinner here */}
+        <View style={styles.loadingContent}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
       </View>
     );
   }
@@ -183,9 +215,17 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8fafc',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingContent: {
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '500',
   },
 });
 

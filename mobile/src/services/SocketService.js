@@ -24,13 +24,13 @@ class SocketService {
 
   setupEventListeners() {
     this.socket.on('connect', () => {
-      console.log('Connected to server:', this.socket.id);
+      console.log('Connected to server');
       this.isConnected = true;
       this.emit('connection_status', { connected: true });
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('Disconnected from server:', reason);
+      console.log('Disconnected from server');
       this.isConnected = false;
       this.emit('connection_status', { connected: false, reason });
     });
@@ -46,12 +46,12 @@ class SocketService {
     });
 
     this.socket.on('joined', (data) => {
-      console.log('Successfully joined user room:', data);
+      console.log('Successfully joined user room');
       this.emit('user_joined', data);
     });
 
     this.socket.on('new_message', (message) => {
-      console.log('New message received:', message);
+      console.log('New message received');
       this.emit('message_received', message);
     });
 
@@ -60,27 +60,27 @@ class SocketService {
     });
 
     this.socket.on('new_connection_request', (request) => {
-      console.log('New connection request:', request);
+      console.log('New connection request received');
       this.emit('connection_request_received', request);
     });
 
     this.socket.on('connection_established', (data) => {
-      console.log('Connection established:', data);
+      console.log('Connection established');
       this.emit('connection_established', data);
     });
 
     this.socket.on('connection_disconnected', (data) => {
-      console.log('Connection disconnected:', data);
+      console.log('Connection disconnected');
       this.emit('connection_disconnected', data);
     });
 
     this.socket.on('user_online', (data) => {
-      console.log('User came online:', data);
+      console.log('User came online');
       this.emit('user_status_changed', { ...data, online: true });
     });
 
     this.socket.on('user_offline', (data) => {
-      console.log('User went offline:', data);
+      console.log('User went offline');
       this.emit('user_status_changed', { ...data, online: false });
     });
   }

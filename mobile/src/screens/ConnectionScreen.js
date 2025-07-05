@@ -18,6 +18,7 @@ import UsernameInput from '../components/UsernameInput';
 import ConnectionRequest from '../components/ConnectionRequest';
 import ApiService from '../services/ApiService';
 import SocketService from '../services/SocketService';
+import { StateAnimations, FeedbackAnimations } from '../utils/LottieLibrary';
 
 const ConnectionScreen = ({ user, onConnectionEstablished }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -184,6 +185,8 @@ const ConnectionScreen = ({ user, onConnectionEstablished }) => {
               onRefresh={onRefresh}
               tintColor="#1E1E1E"
               colors={['#4DD3F4']}
+              title={refreshing ? 'Refreshing...' : 'Pull to refresh'}
+              titleColor="#1E1E1E"
             />
           }
         >
@@ -221,6 +224,9 @@ const ConnectionScreen = ({ user, onConnectionEstablished }) => {
             
             {connectionRequests.length === 0 ? (
               <View style={styles.emptyState}>
+                <LottieView
+                  {...StateAnimations.empty()}
+                />
                 <Text style={styles.emptyStateText}>
                   No pending connection requests
                 </Text>
@@ -255,10 +261,11 @@ const ConnectionScreen = ({ user, onConnectionEstablished }) => {
           <View style={styles.animationOverlay}>
             <BlurView intensity={50} style={styles.animationContainer}>
               <LottieView
-                source={require('../../assets/animations/connection.json')}
-                autoPlay
-                loop={false}
-                style={styles.connectionAnimation}
+                {...FeedbackAnimations.celebration()}
+                style={styles.celebrationAnimation}
+              />
+              <LottieView
+                {...FeedbackAnimations.connection()}
               />
               <Text style={styles.connectionText}>Connection Established!</Text>
               <Text style={styles.connectionSubtext}>Redirecting to chat...</Text>
@@ -350,6 +357,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 40,
   },
+  emptyStateAnimation: {
+    width: 80,
+    height: 80,
+    marginBottom: 20,
+  },
   emptyStateText: {
     fontSize: 15,
     color: '#666666',
@@ -398,6 +410,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
+  },
+  celebrationAnimation: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    top: -50,
+    left: -50,
   },
   connectionAnimation: {
     width: 100,

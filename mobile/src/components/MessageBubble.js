@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import LottieView from 'lottie-react-native';
+import { LoadingAnimations, CommunicationAnimations } from '../utils/LottieLibrary';
 
 const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
   const formatTime = (timestamp) => {
@@ -28,9 +30,30 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
             {message.content}
           </Text>
           
-          <Text style={[styles.timestamp, styles.ownTimestamp]}>
-            {formatTime(message.timestamp)}
-          </Text>
+          <View style={styles.timestampContainer}>
+            <Text style={[styles.timestamp, styles.ownTimestamp]}>
+              {formatTime(message.timestamp)}
+            </Text>
+            {isOwnMessage && (
+              <View style={styles.deliveryStatus}>
+                {message.status === 'sending' && (
+                  <LottieView
+                    {...LoadingAnimations.small()}
+                  />
+                )}
+                {message.status === 'sent' && (
+                  <LottieView
+                    {...CommunicationAnimations.sent()}
+                  />
+                )}
+                {message.status === 'delivered' && (
+                  <LottieView
+                    {...CommunicationAnimations.delivered()}
+                  />
+                )}
+              </View>
+            )}
+          </View>
         </LinearGradient>
       ) : (
         <LinearGradient
@@ -103,10 +126,21 @@ const styles = StyleSheet.create({
   otherMessageText: {
     color: '#ffffff',
   },
+  timestampContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+  },
   timestamp: {
     fontSize: 10,
-    alignSelf: 'flex-end',
     fontWeight: '400',
+  },
+  deliveryStatus: {
+    marginLeft: 6,
+  },
+  statusAnimation: {
+    width: 12,
+    height: 12,
   },
   ownTimestamp: {
     color: 'rgba(255, 255, 255, 0.8)',

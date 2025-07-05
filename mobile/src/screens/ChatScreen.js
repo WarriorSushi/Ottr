@@ -16,11 +16,11 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import LottieView from 'lottie-react-native';
 import MessageBubble from '../components/MessageBubble';
 import SocketService from '../services/SocketService';
 import ApiService from '../services/ApiService';
-import StorageService from '../services/StorageService';
+import { CommunicationAnimations } from '../utils/LottieLibrary';
 
 const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) => {
   const [messages, setMessages] = useState(initialMessages);
@@ -306,6 +306,18 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
             showsVerticalScrollIndicator={false}
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
+            ListHeaderComponent={() => (
+              otherUserTyping ? (
+                <View style={styles.typingIndicatorContainer}>
+                  <View style={styles.typingBubble}>
+                    <LottieView
+                      {...CommunicationAnimations.typing()}
+                    />
+                    <Text style={styles.typingText}>{otherUser.username} is typing...</Text>
+                  </View>
+                </View>
+              ) : null
+            )}
           />
 
           {/* Input Container */}
@@ -583,6 +595,37 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontWeight: '600',
     fontSize: 15,
+  },
+  typingIndicatorContainer: {
+    marginVertical: 8,
+    marginHorizontal: 20,
+    alignItems: 'flex-start',
+  },
+  typingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 18,
+    borderBottomLeftRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  typingAnimation: {
+    width: 30,
+    height: 12,
+    marginRight: 8,
+  },
+  typingText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontStyle: 'italic',
   },
 });
 

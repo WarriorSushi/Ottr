@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
+import { LoadingAnimations } from '../utils/LottieLibrary';
 
 const ConnectionRequest = ({ request, onAccept, onReject, isProcessing = false }) => {
   const formatTime = (timestamp) => {
@@ -43,10 +44,7 @@ const ConnectionRequest = ({ request, onAccept, onReject, isProcessing = false }
             {isProcessing ? (
               <View style={styles.loadingContainer}>
                 <LottieView
-                  source={require('../../assets/animations/loading.json')}
-                  autoPlay
-                  loop
-                  style={styles.loadingAnimation}
+                  {...LoadingAnimations.small()}
                 />
                 <Text style={[styles.buttonText, styles.rejectButtonText]}>
                   Processing...
@@ -75,10 +73,7 @@ const ConnectionRequest = ({ request, onAccept, onReject, isProcessing = false }
             {isProcessing ? (
               <View style={styles.loadingContainer}>
                 <LottieView
-                  source={require('../../assets/animations/loading.json')}
-                  autoPlay
-                  loop
-                  style={styles.loadingAnimation}
+                  {...LoadingAnimations.small()}
                 />
                 <Text style={[styles.buttonText, styles.acceptButtonText]}>
                   Processing...
