@@ -8,6 +8,7 @@ import StorageService from './src/services/StorageService';
 import SocketService from './src/services/SocketService';
 import ApiService from './src/services/ApiService';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
+import { WallpaperProvider } from './src/contexts/WallpaperContext';
 
 function AppContent() {
   const { theme } = useTheme();
@@ -277,7 +278,9 @@ const styles = StyleSheet.create({
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <WallpaperProvider>
+        <AppContent />
+      </WallpaperProvider>
     </ThemeProvider>
   );
 }

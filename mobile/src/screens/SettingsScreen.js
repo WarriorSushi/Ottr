@@ -7,20 +7,29 @@ import {
   Switch,
   ScrollView,
   StatusBar,
-  Alert
+  Alert,
+  Image,
+  Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../contexts/ThemeContext';
+import { useWallpaper, wallpapers } from '../contexts/WallpaperContext';
 
 const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
   const { theme, isDark, toggleTheme } = useTheme();
+  const { currentWallpaper, setWallpaper, getCurrentWallpaper } = useWallpaper();
 
   const handleThemeToggle = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     toggleTheme();
+  };
+
+  const handleWallpaperSelect = (wallpaperId) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setWallpaper(wallpaperId);
   };
 
   const handleDisconnect = () => {
@@ -112,6 +121,44 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
                 thumbColor={isDark ? theme.primaryLight : theme.surface}
                 ios_backgroundColor={theme.border}
               />
+            </View>
+          </BlurView>
+
+          {/* Wallpaper Section */}
+          <BlurView intensity={20} style={[styles.section, { backgroundColor: theme.glassBg }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Chat Wallpaper
+            </Text>
+            
+            <View style={styles.wallpaperGrid}>
+              {Object.values(wallpapers).map((wallpaper) => {
+                const isSelected = getCurrentWallpaper(isDark).id === wallpaper.id;
+                return (
+                  <TouchableOpacity
+                    key={wallpaper.id}
+                    style={[
+                      styles.wallpaperButton,
+                      { borderColor: isSelected ? theme.primary : theme.border },
+                      isSelected && { borderWidth: 3 }
+                    ]}
+                    onPress={() => handleWallpaperSelect(wallpaper.id)}
+                  >
+                    <Image
+                      source={wallpaper.image}
+                      style={styles.wallpaperPreview}
+                      resizeMode="cover"
+                    />
+                    {isSelected && (
+                      <View style={[styles.selectedOverlay, { backgroundColor: theme.primary }]}>
+                        <Text style={styles.selectedIcon}>✓</Text>
+                      </View>
+                    )}
+                    <Text style={[styles.wallpaperName, { color: theme.text }]} numberOfLines={1}>
+                      {wallpaper.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </BlurView>
 
@@ -324,6 +371,46 @@ const styles = StyleSheet.create({
   dangerButtonTextContainer: {
     flex: 1,
     flexShrink: 1,
+  },
+  wallpaperGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  wallpaperButton: {
+    width: (Dimensions.get('window').width - 120) / 3, // 3 columns with margins
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  wallpaperPreview: {
+    width: '100%',
+    height: 80,
+    borderRadius: 11,
+  },
+  selectedOverlay: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedIcon: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  wallpaperName: {
+    fontSize: 10,
+    fontWeight: '500',
+    textAlign: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 6,
   },
 });
 

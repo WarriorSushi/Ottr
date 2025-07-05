@@ -12,7 +12,8 @@ import {
   Dimensions,
   StatusBar,
   Keyboard,
-  Animated
+  Animated,
+  ImageBackground
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,9 +24,14 @@ import SocketService from '../services/SocketService';
 import ApiService from '../services/ApiService';
 import { CommunicationAnimations } from '../utils/LottieLibrary';
 import { useTheme } from '../contexts/ThemeContext';
+import { useWallpaper } from '../contexts/WallpaperContext';
 
 const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) => {
   const { theme, isDark } = useTheme();
+  const { getCurrentWallpaper } = useWallpaper();
+  const currentWallpaper = getCurrentWallpaper(isDark);
+  
+  console.log('🖼️ ChatScreen wallpaper:', currentWallpaper?.name || 'No wallpaper');
   const [messages, setMessages] = useState(initialMessages);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -288,11 +294,11 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
   const dynamicStyles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.background,
+      backgroundColor: 'transparent', // Let wallpaper show through
     },
     messagesList: {
       flex: 1,
-      backgroundColor: theme.background,
+      backgroundColor: 'transparent', // Let wallpaper show through
     },
     inputContainer: {
       backgroundColor: theme.surface,
@@ -321,8 +327,12 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
           translucent={false} 
         />
         
-        {/* Chat Background */}
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.background }]} />
+        {/* Chat Wallpaper Background */}
+        <ImageBackground 
+          source={currentWallpaper.image}
+          style={StyleSheet.absoluteFillObject}
+          resizeMode="cover"
+        />
         
         {/* Header with Gradient */}
         <LinearGradient
