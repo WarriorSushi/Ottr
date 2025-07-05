@@ -6,7 +6,7 @@ import { LoadingAnimations, CommunicationAnimations } from '../utils/LottieLibra
 import { useTheme } from '../contexts/ThemeContext';
 
 const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
@@ -29,12 +29,12 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
             <Text style={styles.username}>{message.sender_username}</Text>
           )}
           
-          <Text style={[styles.messageText, styles.ownMessageText]}>
+          <Text style={[styles.messageText, { color: isDark ? '#ffffff' : '#000000' }]}>
             {message.content}
           </Text>
           
           <View style={styles.timestampContainer}>
-            <Text style={[styles.timestamp, styles.ownTimestamp]}>
+            <Text style={[styles.timestamp, { color: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.6)' }]}>
               {formatTime(message.timestamp)}
             </Text>
             {isOwnMessage && (
@@ -69,11 +69,11 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
             <Text style={styles.username}>{message.sender_username}</Text>
           )}
           
-          <Text style={[styles.messageText, styles.otherMessageText]}>
+          <Text style={[styles.messageText, { color: isDark ? '#ffffff' : '#000000' }]}>
             {message.content}
           </Text>
           
-          <Text style={[styles.timestamp, styles.otherTimestamp]}>
+          <Text style={[styles.timestamp, { color: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.6)' }]}>
             {formatTime(message.timestamp)}
           </Text>
         </LinearGradient>

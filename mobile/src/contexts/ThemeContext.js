@@ -39,8 +39,8 @@ export const lightTheme = {
   info: '#06b6d4',
   
   // Chat specific
-  myMessageBg: ['#3b82f6', '#8b5cf6'],
-  otherMessageBg: ['#6b7280', '#4b5563'],
+  myMessageBg: ['#6EE7B7', '#34D399'], // Fresh Mint Green Gradient
+  otherMessageBg: ['#ffffff', '#f3f4f6'], // White to Misty Gray Gradient
   inputBg: '#ffffff',
   inputBorder: '#e2e8f0',
   
@@ -89,8 +89,8 @@ export const darkTheme = {
   info: '#22d3ee',
   
   // Chat specific
-  myMessageBg: ['#3b82f6', '#8b5cf6'],
-  otherMessageBg: ['#475569', '#374151'],
+  myMessageBg: ['#8B5CF6', '#7C3AED'], // Royal Purple Gradient
+  otherMessageBg: ['#1f2937', '#111827'], // Deep Slate Black Gradient
   inputBg: '#334155',
   inputBorder: '#475569',
   
