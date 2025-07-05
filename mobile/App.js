@@ -169,10 +169,14 @@ function AppContent() {
 
   const handleDisconnect = async () => {
     try {
-      console.log('handleDisconnect called');
+      console.log('🔌 handleDisconnect called - navigating to ConnectionScreen');
       
+      // Clear connection state immediately
       setCurrentConnection(null);
       setInitialMessages([]);
+      
+      // Small delay to ensure state updates are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
       
     } catch (error) {
       console.error('Error in handleDisconnect:', error);

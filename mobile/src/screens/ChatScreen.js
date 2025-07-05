@@ -36,6 +36,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
   const flatListRef = useRef();
   const typingTimeoutRef = useRef();
   const settingsSlideAnim = useRef(new Animated.Value(1)).current;
+  const isMountedRef = useRef(true);
 
   const otherUser = connection.user1_id === user.id 
     ? { id: connection.user2_id, username: connection.user2_username }
@@ -46,6 +47,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     setupKeyboardListeners();
     
     return () => {
+      isMountedRef.current = false;
       SocketService.off('message_received', handleNewMessage);
       SocketService.off('typing_indicator', handleTypingIndicator);
       SocketService.off('connection_disconnected', handleConnectionDisconnected);
@@ -98,6 +100,8 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
 
 
   const handleNewMessage = (message) => {
+    if (!isMountedRef.current) return;
+    
     if (message.connection_id === connection.id) {
       // Check for duplicates before adding
       setMessages(prev => {
@@ -117,18 +121,24 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
       
       // Auto-scroll to top (latest message) for inverted list
       setTimeout(() => {
-        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        if (isMountedRef.current) {
+          flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        }
       }, 50);
     }
   };
 
   const handleTypingIndicator = (data) => {
+    if (!isMountedRef.current) return;
+    
     if (data.userId !== user.id) {
       setOtherUserTyping(data.typing);
     }
   };
 
   const handleConnectionDisconnected = (data) => {
+    if (!isMountedRef.current) return;
+    
     setIsConnected(false);
     Alert.alert(
       'Connection Ended',
@@ -143,6 +153,8 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
   };
 
   const handleUserStatusChanged = (data) => {
+    if (!isMountedRef.current) return;
+    
     if (data.userId === otherUser.id) {
       setOtherUserOnline(data.online);
     }
@@ -223,13 +235,23 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
 
   const handleDisconnect = async () => {
     try {
+      console.log('💔 ChatScreen handleDisconnect called');
+      
+      // Close settings first
+      closeSettings();
+      
+      // Disconnect from API and socket
       await ApiService.disconnectConnection(connection.id, user.id);
       SocketService.disconnectConnection({
         connectionId: connection.id,
         userId: user.id
       });
+      
+      // Call parent disconnect handler
       onDisconnect();
+      
     } catch (error) {
+      console.error('Error in handleDisconnect:', error);
       Alert.alert('Error', 'Failed to disconnect. Please try again.');
     }
   };
