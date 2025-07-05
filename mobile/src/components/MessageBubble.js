@@ -25,9 +25,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
           end={[1, 1]}
           style={[styles.bubble, styles.ownMessageBubble]}
         >
-          {showUsername && !isOwnMessage && (
-            <Text style={styles.username}>{message.sender_username}</Text>
-          )}
+          {/* Removed sender name for cleaner look */}
           
           <Text style={[styles.messageText, { color: isDark ? '#ffffff' : '#000000' }]}>
             {message.content}
@@ -65,9 +63,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
           end={[1, 1]}
           style={[styles.bubble, styles.otherMessageBubble]}
         >
-          {showUsername && (
-            <Text style={styles.username}>{message.sender_username}</Text>
-          )}
+          {/* Removed sender name for cleaner look */}
           
           <Text style={[styles.messageText, { color: isDark ? '#ffffff' : '#000000' }]}>
             {message.content}
@@ -84,8 +80,8 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 4,
-    marginHorizontal: 20,
+    marginVertical: 2, // Reduced from 4 for tighter spacing
+    marginHorizontal: 12, // Reduced from 20 for tighter spacing
   },
   ownMessageContainer: {
     alignItems: 'flex-end',
@@ -94,16 +90,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   bubble: {
-    maxWidth: '85%',
-    borderRadius: 18,
+    maxWidth: '80%', // Reduced from 85% for tighter bubbles
+    borderRadius: 16, // Reduced from 18 for tighter look
     overflow: 'hidden',
-    elevation: 6,
+    elevation: 3, // Reduced shadow for cleaner look
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15, // Reduced shadow opacity
+    shadowRadius: 2, // Reduced shadow radius
+    paddingHorizontal: 12, // Reduced from 16 for tighter padding
+    paddingVertical: 8, // Reduced from 10 for tighter padding
   },
   ownMessageBubble: {
     borderBottomRightRadius: 6,
@@ -119,8 +115,8 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 4,
+    lineHeight: 18, // Reduced from 20 for tighter text
+    marginBottom: 2, // Reduced from 4 for tighter spacing
     fontWeight: '400',
   },
   ownMessageText: {
