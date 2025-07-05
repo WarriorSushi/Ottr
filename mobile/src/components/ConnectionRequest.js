@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
 import { LoadingAnimations } from '../utils/LottieLibrary';
+import { useTheme } from '../contexts/ThemeContext';
 
 const ConnectionRequest = ({ request, onAccept, onReject, isProcessing = false }) => {
+  const { theme } = useTheme();
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -23,13 +24,13 @@ const ConnectionRequest = ({ request, onAccept, onReject, isProcessing = false }
   };
 
   return (
-    <BlurView intensity={30} style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.surfaceSecondary }]}>
       <View style={styles.header}>
-        <Text style={styles.username}>{request.from_username}</Text>
-        <Text style={styles.timestamp}>{formatTime(request.created_at)}</Text>
+        <Text style={[styles.username, { color: theme.text }]}>{request.from_username}</Text>
+        <Text style={[styles.timestamp, { color: theme.textMuted }]}>{formatTime(request.created_at)}</Text>
       </View>
       
-      <Text style={styles.message}>wants to connect with you</Text>
+      <Text style={[styles.message, { color: theme.textSecondary }]}>wants to connect with you</Text>
       
       <View style={styles.buttonContainer}>
         <TouchableOpacity
@@ -40,18 +41,18 @@ const ConnectionRequest = ({ request, onAccept, onReject, isProcessing = false }
           }}
           disabled={isProcessing}
         >
-          <View style={styles.rejectButton}>
+          <View style={[styles.rejectButton, { backgroundColor: theme.surface, borderColor: theme.error }]}>
             {isProcessing ? (
               <View style={styles.loadingContainer}>
                 <LottieView
                   {...LoadingAnimations.small()}
                 />
-                <Text style={[styles.buttonText, styles.rejectButtonText]}>
+                <Text style={[styles.buttonText, { color: theme.error }]}>
                   Processing...
                 </Text>
               </View>
             ) : (
-              <Text style={[styles.buttonText, styles.rejectButtonText]}>
+              <Text style={[styles.buttonText, { color: theme.error }]}>
                 Decline
               </Text>
             )}
@@ -67,7 +68,7 @@ const ConnectionRequest = ({ request, onAccept, onReject, isProcessing = false }
           disabled={isProcessing}
         >
           <LinearGradient
-            colors={isProcessing ? ['#ccc', '#aaa'] : ['#F8B647', '#E89E34']}
+            colors={isProcessing ? [theme.border, theme.textMuted] : [theme.primary, theme.accent]}
             style={styles.acceptButton}
           >
             {isProcessing ? (
@@ -87,45 +88,39 @@ const ConnectionRequest = ({ request, onAccept, onReject, isProcessing = false }
           </LinearGradient>
         </TouchableOpacity>
       </View>
-    </BlurView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    padding: 20,
-    marginVertical: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    elevation: 6,
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 6,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   username: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1E1E1E',
+    fontSize: 15,
+    fontWeight: '600',
   },
   timestamp: {
-    fontSize: 11,
-    color: '#666666',
-    fontWeight: '500',
+    fontSize: 10,
+    fontWeight: '400',
   },
   message: {
-    fontSize: 13,
-    color: '#333333',
-    marginBottom: 16,
-    fontWeight: '500',
+    fontSize: 12,
+    marginBottom: 12,
+    fontWeight: '400',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -134,40 +129,35 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    borderRadius: 15,
+    borderRadius: 10,
     overflow: 'hidden',
-    elevation: 3,
+    elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   acceptButton: {
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rejectButton: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
     borderWidth: 1,
-    borderColor: 'rgba(139,74,39,0.5)',
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 15,
+    borderRadius: 10,
   },
   buttonText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
   },
   acceptButtonText: {
-    color: '#1E1E1E',
-  },
-  rejectButtonText: {
-    color: '#8B4A27',
+    color: '#ffffff',
   },
   loadingContainer: {
     flexDirection: 'row',

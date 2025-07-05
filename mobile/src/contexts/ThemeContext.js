@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ThemeContext = createContext();
@@ -119,26 +119,47 @@ export const ThemeProvider = ({ children }) => {
     loadThemePreference();
   }, []);
 
+  // Prevent updates during unmount
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const loadThemePreference = async () => {
     try {
       const savedTheme = await AsyncStorage.getItem('theme_preference');
-      if (savedTheme !== null) {
+      if (savedTheme !== null && isMountedRef.current) {
         setIsDark(savedTheme === 'dark');
       }
     } catch (error) {
       console.error('Error loading theme preference:', error);
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
   const toggleTheme = async () => {
+    if (!isMountedRef.current) return;
+    
     try {
       const newTheme = !isDark;
       setIsDark(newTheme);
-      await AsyncStorage.setItem('theme_preference', newTheme ? 'dark' : 'light');
+      
+      // Use setTimeout to avoid synchronous updates during render
+      setTimeout(async () => {
+        if (!isMountedRef.current) return;
+        try {
+          await AsyncStorage.setItem('theme_preference', newTheme ? 'dark' : 'light');
+        } catch (error) {
+          console.error('Error saving theme preference:', error);
+        }
+      }, 0);
     } catch (error) {
-      console.error('Error saving theme preference:', error);
+      console.error('Error toggling theme:', error);
     }
   };
 

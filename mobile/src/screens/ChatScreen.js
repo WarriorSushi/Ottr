@@ -237,8 +237,9 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     try {
       console.log('💔 ChatScreen handleDisconnect called');
       
-      // Close settings first
-      closeSettings();
+      // Immediately mark as unmounting and close settings
+      isMountedRef.current = false;
+      setShowSettings(false);
       
       // Disconnect from API and socket
       await ApiService.disconnectConnection(connection.id, user.id);
@@ -247,12 +248,12 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
         userId: user.id
       });
       
-      // Call parent disconnect handler
+      // Call parent disconnect handler immediately
       onDisconnect();
       
     } catch (error) {
       console.error('Error in handleDisconnect:', error);
-      Alert.alert('Error', 'Failed to disconnect. Please try again.');
+      onDisconnect();
     }
   };
 

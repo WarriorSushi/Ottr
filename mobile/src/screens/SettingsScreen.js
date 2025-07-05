@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   Switch,
   ScrollView,
-  StatusBar 
+  StatusBar,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,8 +25,26 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
 
   const handleDisconnect = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    onClose();
-    onDisconnect();
+    
+    Alert.alert(
+      'End Connection',
+      `Are you sure you want to disconnect from ${otherUser?.username || 'your chat partner'}? This will end your current conversation.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => console.log('Disconnect cancelled')
+        },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: () => {
+            console.log('🔴 User confirmed disconnect');
+            onDisconnect();
+          }
+        }
+      ]
+    );
   };
 
   if (!visible) {

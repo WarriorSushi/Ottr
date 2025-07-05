@@ -7,16 +7,17 @@ import ChatScreen from './src/screens/ChatScreen';
 import StorageService from './src/services/StorageService';
 import SocketService from './src/services/SocketService';
 import ApiService from './src/services/ApiService';
-import { ThemeProvider } from './src/contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 
 function AppContent() {
+  const { theme } = useTheme();
   const [currentUser, setCurrentUser] = useState(null);
   const [currentConnection, setCurrentConnection] = useState(null);
   const [initialMessages, setInitialMessages] = useState([]);
   const [showSplash, setShowSplash] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState("Connecting you to your OTTR");
-  const fadeAnim = new Animated.Value(0);
+  const fadeAnim = new Animated.Value(1); // Start visible instead of 0
 
   useEffect(() => {
     initializeApp();
@@ -169,38 +170,52 @@ function AppContent() {
 
   const handleDisconnect = async () => {
     try {
-      console.log('🔌 handleDisconnect called - navigating to ConnectionScreen');
+      console.log('🔌 handleDisconnect called');
+      console.log('   - BEFORE: currentUser:', currentUser?.username || 'NULL');
+      console.log('   - BEFORE: currentConnection:', currentConnection?.id || 'NULL');
       
-      // Clear connection state immediately
+      // Clear connection state
       setCurrentConnection(null);
       setInitialMessages([]);
       
-      // Small delay to ensure state updates are processed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      console.log('   - AFTER: Connection should be null, user should remain');
+      console.log('✅ handleDisconnect completed');
       
     } catch (error) {
       console.error('Error in handleDisconnect:', error);
+      setCurrentConnection(null);
+      setInitialMessages([]);
     }
   };
 
   const getCurrentScreen = () => {
+    console.log('🔍 getCurrentScreen DEBUG:');
+    console.log('   - currentUser:', currentUser ? `${currentUser.username} (id: ${currentUser.id})` : 'NULL');
+    console.log('   - currentConnection:', currentConnection ? `id: ${currentConnection.id}` : 'NULL');
+    console.log('   - showSplash:', showSplash);
+    
     if (!currentUser) {
+      console.log('🔄 RENDERING: WelcomeScreen (no user)');
       return (
         <WelcomeScreen onUserRegistered={handleUserRegistered} />
       );
     }
     
     if (!currentConnection) {
+      console.log('🔄 RENDERING: ConnectionScreen for user:', currentUser.username);
       return (
         <ConnectionScreen 
+          key={`connection-${currentUser.id}`}
           user={currentUser}
           onConnectionEstablished={handleConnectionEstablished}
         />
       );
     }
     
+    console.log('🔄 RENDERING: ChatScreen for connection:', currentConnection.id);
     return (
       <ChatScreen
+        key={`chat-${currentConnection.id}`}
         user={currentUser}
         connection={currentConnection}
         initialMessages={initialMessages}
@@ -210,6 +225,7 @@ function AppContent() {
   };
 
   if (showSplash) {
+    console.log('🎭 RENDERING: SplashScreen (isLoading:', isLoading, ')');
     return (
       <SplashScreen 
         onSplashComplete={handleSplashComplete} 
@@ -219,12 +235,32 @@ function AppContent() {
     );
   }
 
+  console.log('🎨 RENDERING: Main App Container');
+  const screenToRender = getCurrentScreen();
+  console.log('🎯 Screen component to render:', screenToRender?.type?.name || 'Unknown');
+
+  // Fallback safety check
+  if (!screenToRender) {
+    console.log('🚨 NO SCREEN TO RENDER - Using ConnectionScreen fallback');
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={theme.background} />
+        <View style={styles.screenContainer}>
+          <ConnectionScreen 
+            user={currentUser || { id: 'fallback', username: 'User' }}
+            onConnectionEstablished={handleConnectionEstablished}
+          />
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <Animated.View style={[styles.screenContainer, { opacity: fadeAnim }]}>
-        {getCurrentScreen()}
-      </Animated.View>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.background} />
+      <View style={styles.screenContainer}>
+        {screenToRender}
+      </View>
     </View>
   );
 }
@@ -232,7 +268,6 @@ function AppContent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   screenContainer: {
     flex: 1,

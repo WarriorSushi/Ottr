@@ -19,8 +19,12 @@ import ConnectionRequest from '../components/ConnectionRequest';
 import ApiService from '../services/ApiService';
 import SocketService from '../services/SocketService';
 import { StateAnimations, FeedbackAnimations } from '../utils/LottieLibrary';
+import { useTheme } from '../contexts/ThemeContext';
 
 const ConnectionScreen = ({ user, onConnectionEstablished }) => {
+  console.log('🔌 ConnectionScreen RENDERING for user:', user?.username || 'NULL USER');
+  const { theme, isDark } = useTheme();
+  console.log('🎨 ConnectionScreen theme loaded:', isDark ? 'dark' : 'light');
   const [isLoading, setIsLoading] = useState(false);
   const [connectionRequests, setConnectionRequests] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -168,11 +172,11 @@ const ConnectionScreen = ({ user, onConnectionEstablished }) => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#A8E6FF" translucent={false} />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={theme.background} translucent={false} />
         
-        {/* Crystal Aqua Background */}
+        {/* Dark Background */}
         <LinearGradient
-          colors={['#A8E6FF', '#4DD3F4', '#A8E6FF']}
+          colors={[theme.background, theme.surfaceSecondary, theme.background]}
           style={StyleSheet.absoluteFillObject}
         />
         
@@ -191,7 +195,7 @@ const ConnectionScreen = ({ user, onConnectionEstablished }) => {
           }
         >
           {/* Header with Logo and Welcome */}
-          <BlurView intensity={30} style={styles.header}>
+          <View style={[styles.header, { backgroundColor: theme.surface }]}>
             <View style={styles.logoContainer}>
               <Image 
                 source={require('../../assets/images/logo-main.png')}
@@ -199,14 +203,14 @@ const ConnectionScreen = ({ user, onConnectionEstablished }) => {
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.title}>Hello, {user.username}!</Text>
-            <Text style={styles.subtitle}>Ready to connect?</Text>
-          </BlurView>
+            <Text style={[styles.title, { color: theme.text }]}>Hello, {user.username}!</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Ready to connect?</Text>
+          </View>
 
           {/* Send Connection Request Section */}
-          <BlurView intensity={40} style={styles.section}>
-            <Text style={styles.sectionTitle}>Send Connection Request</Text>
-            <Text style={styles.sectionDescription}>
+          <View style={[styles.section, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Send Connection Request</Text>
+            <Text style={[styles.sectionDescription, { color: theme.textSecondary }]}>
               Enter a username to send them a connection request
             </Text>
             <UsernameInput
@@ -214,11 +218,11 @@ const ConnectionScreen = ({ user, onConnectionEstablished }) => {
               isLoading={isLoading}
               placeholder="Enter username to connect"
             />
-          </BlurView>
+          </View>
 
           {/* Pending Requests Section */}
-          <BlurView intensity={40} style={styles.section}>
-            <Text style={styles.sectionTitle}>
+          <View style={[styles.section, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
               Pending Requests ({connectionRequests.length})
             </Text>
             
@@ -227,10 +231,10 @@ const ConnectionScreen = ({ user, onConnectionEstablished }) => {
                 <LottieView
                   {...StateAnimations.empty()}
                 />
-                <Text style={styles.emptyStateText}>
+                <Text style={[styles.emptyStateText, { color: theme.textSecondary }]}>
                   No pending connection requests
                 </Text>
-                <Text style={styles.emptyStateSubtext}>
+                <Text style={[styles.emptyStateSubtext, { color: theme.textMuted }]}>
                   Pull to refresh or send a request to get started
                 </Text>
               </View>
@@ -245,21 +249,21 @@ const ConnectionScreen = ({ user, onConnectionEstablished }) => {
                 />
               ))
             )}
-          </BlurView>
+          </View>
 
           {/* Footer */}
-          <BlurView intensity={20} style={styles.footer}>
-            <Text style={styles.footerText}>
+          <View style={[styles.footer, { backgroundColor: theme.surfaceSecondary }]}>
+            <Text style={[styles.footerText, { color: theme.textSecondary }]}>
               You can only have one active connection at a time.{'\n'}
               Accept a request to start chatting!
             </Text>
-          </BlurView>
+          </View>
         </ScrollView>
         
         {/* Connection Animation Overlay */}
         {showConnectionAnimation && (
           <View style={styles.animationOverlay}>
-            <BlurView intensity={50} style={styles.animationContainer}>
+            <View style={[styles.animationContainer, { backgroundColor: theme.surface }]}>
               <LottieView
                 {...FeedbackAnimations.celebration()}
                 style={styles.celebrationAnimation}
@@ -267,9 +271,9 @@ const ConnectionScreen = ({ user, onConnectionEstablished }) => {
               <LottieView
                 {...FeedbackAnimations.connection()}
               />
-              <Text style={styles.connectionText}>Connection Established!</Text>
-              <Text style={styles.connectionSubtext}>Redirecting to chat...</Text>
-            </BlurView>
+              <Text style={[styles.connectionText, { color: theme.text }]}>Connection Established!</Text>
+              <Text style={[styles.connectionSubtext, { color: theme.textSecondary }]}>Redirecting to chat...</Text>
+            </View>
           </View>
         )}
       </SafeAreaView>
@@ -282,114 +286,97 @@ const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#A8E6FF',
   },
   scrollContainer: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 10,
   },
   header: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 25,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    padding: 30,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 20,
+    padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-    elevation: 8,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   logoContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 60,
+    height: 60,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1E1E1E',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 15,
-    color: '#333333',
+    fontSize: 14,
     fontWeight: '500',
+    textAlign: 'center',
   },
   section: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 25,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    padding: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-    elevation: 6,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 16,
+    padding: 20,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
   },
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#1E1E1E',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   sectionDescription: {
-    fontSize: 13,
-    color: '#666666',
-    marginBottom: 20,
-    lineHeight: 18,
+    fontSize: 12,
+    marginBottom: 16,
+    lineHeight: 16,
     fontWeight: '400',
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 24,
   },
   emptyStateAnimation: {
-    width: 80,
-    height: 80,
-    marginBottom: 20,
+    width: 60,
+    height: 60,
+    marginBottom: 12,
   },
   emptyStateText: {
-    fontSize: 15,
-    color: '#666666',
-    marginBottom: 8,
+    fontSize: 14,
+    marginBottom: 6,
     fontWeight: '500',
+    textAlign: 'center',
   },
   emptyStateSubtext: {
-    fontSize: 12,
-    color: '#888888',
+    fontSize: 11,
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 14,
   },
   footer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    padding: 20,
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
   },
   footerText: {
-    fontSize: 11,
-    color: '#666666',
+    fontSize: 10,
     textAlign: 'center',
-    lineHeight: 15,
+    lineHeight: 13,
     fontWeight: '400',
   },
   animationOverlay: {
@@ -404,12 +391,14 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   animationContainer: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 30,
-    padding: 40,
+    borderRadius: 24,
+    padding: 32,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   celebrationAnimation: {
     position: 'absolute',
@@ -424,15 +413,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   connectionText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#1E1E1E',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   connectionSubtext: {
-    fontSize: 14,
-    color: '#666666',
+    fontSize: 13,
     textAlign: 'center',
     fontWeight: '500',
   },
