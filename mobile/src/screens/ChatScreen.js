@@ -9,29 +9,33 @@ import {
   KeyboardAvoidingView, 
   Platform, 
   Alert,
-  Modal,
   Dimensions,
   StatusBar,
-  Keyboard
+  Keyboard,
+  Animated
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
 import MessageBubble from '../components/MessageBubble';
+import SettingsScreen from './SettingsScreen';
 import SocketService from '../services/SocketService';
 import ApiService from '../services/ApiService';
 import { CommunicationAnimations } from '../utils/LottieLibrary';
+import { useTheme } from '../contexts/ThemeContext';
 
 const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) => {
+  const { theme, isDark } = useTheme();
   const [messages, setMessages] = useState(initialMessages);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   const [otherUserOnline, setOtherUserOnline] = useState(true);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const flatListRef = useRef();
   const typingTimeoutRef = useRef();
+  const settingsSlideAnim = useRef(new Animated.Value(1)).current;
 
   const otherUser = connection.user1_id === user.id 
     ? { id: connection.user2_id, username: connection.user2_username }
@@ -195,30 +199,39 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     }
   };
 
-  const handleDisconnect = () => {
-    Alert.alert(
-      'Disconnect',
-      'Are you sure you want to end this connection? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Disconnect',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await ApiService.disconnectConnection(connection.id, user.id);
-              SocketService.disconnectConnection({
-                connectionId: connection.id,
-                userId: user.id
-              });
-              onDisconnect();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to disconnect. Please try again.');
-            }
-          }
-        }
-      ]
-    );
+  const openSettings = () => {
+    console.log('🎛️ Settings button pressed!');
+    setShowSettings(true);
+    Animated.timing(settingsSlideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      console.log('✅ Settings panel animation completed');
+    });
+  };
+
+  const closeSettings = () => {
+    Animated.timing(settingsSlideAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowSettings(false);
+    });
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      await ApiService.disconnectConnection(connection.id, user.id);
+      SocketService.disconnectConnection({
+        connectionId: connection.id,
+        userId: user.id
+      });
+      onDisconnect();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to disconnect. Please try again.');
+    }
   };
 
   const renderMessage = ({ item, index }) => {
@@ -249,22 +262,48 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     return '#28a745';
   };
 
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    messagesList: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    inputContainer: {
+      backgroundColor: theme.surface,
+      borderTopColor: theme.border,
+    },
+    textInput: {
+      backgroundColor: theme.inputBg,
+      borderColor: theme.inputBorder,
+      color: theme.text,
+    },
+    typingBubble: {
+      backgroundColor: theme.surface,
+      borderColor: theme.border,
+    },
+    typingText: {
+      color: theme.textSecondary,
+    },
+  });
+
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar barStyle="light-content" backgroundColor="#1e293b" translucent={false} />
-        
-        {/* Chat Background Gradient */}
-        <LinearGradient
-          colors={['#f8fafc', '#e2e8f0']}
-          start={[0, 0]}
-          end={[1, 1]}
-          style={StyleSheet.absoluteFillObject}
+      <SafeAreaView style={dynamicStyles.container} edges={['top']}>
+        <StatusBar 
+          barStyle={isDark ? "light-content" : "dark-content"} 
+          backgroundColor={theme.headerBg[0]} 
+          translucent={false} 
         />
+        
+        {/* Chat Background */}
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.background }]} />
         
         {/* Header with Gradient */}
         <LinearGradient
-          colors={['#1e293b', '#0f172a']}
+          colors={theme.headerBg}
           start={[0, 0]}
           end={[1, 1]}
           style={styles.header}
@@ -281,7 +320,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
               </View>
               <TouchableOpacity
                 style={styles.settingsButton}
-                onPress={() => setShowSettingsModal(true)}
+                onPress={openSettings}
               >
                 <View style={styles.settingsButtonBlur}>
                   <Text style={styles.settingsButtonText}>⚙️</Text>
@@ -300,7 +339,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
             data={[...messages].reverse()}
             renderItem={renderMessage}
             keyExtractor={(item, index) => `${item.id || index}`}
-            style={styles.messagesList}
+            style={dynamicStyles.messagesList}
             contentContainerStyle={styles.messagesContainer}
             inverted
             showsVerticalScrollIndicator={false}
@@ -309,11 +348,11 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
             ListHeaderComponent={() => (
               otherUserTyping ? (
                 <View style={styles.typingIndicatorContainer}>
-                  <View style={styles.typingBubble}>
+                  <View style={[styles.typingBubble, dynamicStyles.typingBubble]}>
                     <LottieView
                       {...CommunicationAnimations.typing()}
                     />
-                    <Text style={styles.typingText}>{otherUser.username} is typing...</Text>
+                    <Text style={[styles.typingText, dynamicStyles.typingText]}>{otherUser.username} is typing...</Text>
                   </View>
                 </View>
               ) : null
@@ -321,15 +360,15 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
           />
 
           {/* Input Container */}
-          <SafeAreaView style={styles.inputContainer} edges={['bottom']}>
+          <SafeAreaView style={[styles.inputContainer, dynamicStyles.inputContainer]} edges={['bottom']}>
             <View style={styles.inputWrapper}>
                 <View style={styles.textInputContainer}>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, dynamicStyles.textInput]}
                     value={inputText}
                     onChangeText={handleInputChange}
                     placeholder="Type a message..."
-                    placeholderTextColor="#64748b"
+                    placeholderTextColor={theme.textMuted}
                     multiline
                     maxLength={1000}
                     editable={isConnected}
@@ -358,45 +397,27 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
           </SafeAreaView>
         </KeyboardAvoidingView>
 
-        {/* Glass Modal */}
-        <Modal
-          visible={showSettingsModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowSettingsModal(false)}
-        >
-          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Settings</Text>
-                
-                <TouchableOpacity
-                  style={styles.disconnectButton}
-                  onPress={() => {
-                    setShowSettingsModal(false);
-                    handleDisconnect();
-                  }}
-                >
-                  <LinearGradient
-                    colors={['#ef4444', '#dc2626']}
-                    start={[0, 0]}
-                    end={[1, 1]}
-                    style={styles.buttonGradient}
-                  >
-                    <Text style={styles.disconnectButtonText}>End Connection</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setShowSettingsModal(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+        {/* Sliding Settings Screen */}
+        {showSettings && (
+          <Animated.View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 1000,
+              transform: [{ translateX: Animated.multiply(settingsSlideAnim, Dimensions.get('window').width) }],
+            }}
+          >
+            <SettingsScreen
+              visible={showSettings}
+              onClose={closeSettings}
+              onDisconnect={handleDisconnect}
+              otherUser={otherUser}
+            />
+          </Animated.View>
+        )}
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -405,10 +426,6 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
 const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
   chatContainer: {
     flex: 1,
   },
@@ -532,69 +549,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     transform: [{ rotate: '360deg' }],
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: '85%',
-    maxWidth: 320,
-  },
-  modalContent: {
-    borderRadius: 20,
-    padding: 30,
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 25,
-    color: '#1e293b',
-  },
-  disconnectButton: {
-    width: '100%',
-    borderRadius: 15,
-    overflow: 'hidden',
-    marginBottom: 15,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  buttonGradient: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  disconnectButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  cancelButton: {
-    backgroundColor: '#f1f5f9',
-    borderRadius: 15,
-    padding: 16,
-    alignItems: 'center',
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-  },
-  cancelButtonText: {
-    color: '#475569',
-    fontWeight: '600',
-    fontSize: 15,
   },
   typingIndicatorContainer: {
     marginVertical: 8,

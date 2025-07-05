@@ -3,8 +3,11 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
 import { LoadingAnimations, CommunicationAnimations } from '../utils/LottieLibrary';
+import { useTheme } from '../contexts/ThemeContext';
 
 const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
+  const { theme } = useTheme();
+  
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -17,7 +20,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
     ]}>
       {isOwnMessage ? (
         <LinearGradient
-          colors={['#06b6d4', '#0891b2']}
+          colors={theme.myMessageBg}
           start={[0, 0]}
           end={[1, 1]}
           style={[styles.bubble, styles.ownMessageBubble]}
@@ -57,7 +60,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false }) => {
         </LinearGradient>
       ) : (
         <LinearGradient
-          colors={['#6b7280', '#4b5563']}
+          colors={theme.otherMessageBg}
           start={[0, 0]}
           end={[1, 1]}
           style={[styles.bubble, styles.otherMessageBubble]}

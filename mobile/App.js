@@ -7,8 +7,9 @@ import ChatScreen from './src/screens/ChatScreen';
 import StorageService from './src/services/StorageService';
 import SocketService from './src/services/SocketService';
 import ApiService from './src/services/ApiService';
+import { ThemeProvider } from './src/contexts/ThemeContext';
 
-export default function App() {
+function AppContent() {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentConnection, setCurrentConnection] = useState(null);
   const [initialMessages, setInitialMessages] = useState([]);
@@ -233,6 +234,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}
 
 // Register the app component
 AppRegistry.registerComponent('main', () => App);
