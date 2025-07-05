@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   textInputContainer: {
     flex: 1,
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 25,
     marginRight: 10,
     borderWidth: 1,
     borderColor: '#cbd5e1',
@@ -517,12 +517,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   textInput: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
     maxHeight: 80,
     fontSize: 14,
     color: '#1e293b',
     fontWeight: '400',
+    borderRadius: 25,
   },
   sendButton: {
     borderRadius: 25,

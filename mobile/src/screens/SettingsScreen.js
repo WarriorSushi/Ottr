@@ -167,7 +167,7 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
                 style={styles.dangerButtonGradient}
               >
                 <Text style={styles.dangerButtonIcon}>⚠️</Text>
-                <View>
+                <View style={styles.dangerButtonTextContainer}>
                   <Text style={styles.dangerButtonText}>End Connection</Text>
                   <Text style={styles.dangerButtonSubtext}>
                     This will disconnect you from {otherUser?.username || 'your chat partner'}
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   dangerButtonGradient: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: 16,
   },
   dangerButtonIcon: {
@@ -294,11 +294,17 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   dangerButtonSubtext: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
+    flexWrap: 'wrap',
+    flexShrink: 1,
+  },
+  dangerButtonTextContainer: {
+    flex: 1,
+    flexShrink: 1,
   },
 });
 
