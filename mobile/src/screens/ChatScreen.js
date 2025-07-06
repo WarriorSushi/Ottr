@@ -837,10 +837,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   inputContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(166, 166, 166, 0.9)',
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    borderRadius: 16,
+    borderRadius: 25,
     marginHorizontal: 8,
     marginTop: 8,
     shadowColor: '#000',
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 2,
   },
   textInputContainer: {
     flex: 1,
@@ -889,12 +889,12 @@ const styles = StyleSheet.create({
   sendButtonGradient: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 50,
-    height: 50,
+    width: 45,
+    height: 45,
     borderRadius: 25,
   },
   sendButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   sendButtonText: {
     fontSize: 18,

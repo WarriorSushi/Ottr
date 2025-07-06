@@ -40,13 +40,13 @@ export const lightTheme = {
   
   // Chat specific
   myMessageBg: ['#e2f5ff', '#e2f5ff'], // Light Blue Solid
-  myMessageBorder: '#d4edff', // Slightly darker blue border
+  myMessageBorder: '#e9f7ff', // Slightly darker blue border
   otherMessageBg: ['#ffffff', '#f3f4f6'], // White to Misty Gray Gradient
   inputBg: '#ffffff',
   inputBorder: '#e2e8f0',
   
   // Navigation & Headers
-  headerBg: ['#f8fafc', '#e2e8f0'], // Light and bright gradient
+  headerBg: ['#FFFFFf', '#Ffffff'],// Light and bright gradient
   headerText: '#000000',
   
   // Borders & Dividers
