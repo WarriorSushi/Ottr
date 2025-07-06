@@ -88,6 +88,16 @@ class SocketService {
       console.log('Message reaction received');
       this.emit('message_reaction', data);
     });
+
+    this.socket.on('message_delivered', (data) => {
+      console.log('Message delivered');
+      this.emit('message_delivered', data);
+    });
+
+    this.socket.on('message_read', (data) => {
+      console.log('Message read');
+      this.emit('message_read', data);
+    });
   }
 
   joinUser(userData) {
@@ -142,6 +152,16 @@ class SocketService {
     }
     
     this.socket.emit('send_reaction', reactionData);
+    return true;
+  }
+
+  sendReadReceipt(readReceiptData) {
+    if (!this.socket || !this.isConnected) {
+      console.error('Socket not connected');
+      return false;
+    }
+    
+    this.socket.emit('message_read_receipt', readReceiptData);
     return true;
   }
 

@@ -77,6 +77,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
       SocketService.off('connection_disconnected', handleConnectionDisconnected);
       SocketService.off('user_status_changed', handleUserStatusChanged);
       SocketService.off('message_reaction', handleIncomingReaction);
+      SocketService.off('message_read', handleMessageRead);
       
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -94,12 +95,47 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     }
   }, [messages.length]);
 
+  // Send read receipts for incoming messages
+  useEffect(() => {
+    if (!isMountedRef.current) return;
+    
+    const unreadMessages = messages.filter(msg => 
+      msg.sender_id !== user.id && 
+      (!msg.readByMe || msg.readByMe === false)
+    );
+
+    if (unreadMessages.length > 0) {
+      // Mark messages as read and send read receipts
+      unreadMessages.forEach(msg => {
+        SocketService.sendReadReceipt({
+          messageId: msg.id,
+          connectionId: connection.id,
+          userId: user.id
+        });
+      });
+
+      // Update local state to mark as read
+      setMessages(prevMessages => 
+        prevMessages.map(msg => {
+          if (msg.sender_id !== user.id && (!msg.readByMe || msg.readByMe === false)) {
+            return {
+              ...msg,
+              readByMe: true
+            };
+          }
+          return msg;
+        })
+      );
+    }
+  }, [messages, user.id, connection.id]);
+
   const setupSocketListeners = () => {
     SocketService.on('message_received', handleNewMessage);
     SocketService.on('typing_indicator', handleTypingIndicator);
     SocketService.on('connection_disconnected', handleConnectionDisconnected);
     SocketService.on('user_status_changed', handleUserStatusChanged);
     SocketService.on('message_reaction', handleIncomingReaction);
+    SocketService.on('message_read', handleMessageRead);
   };
 
   const setupKeyboardListeners = () => {
@@ -161,6 +197,21 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     if (message.connection_id === connection.id) {
       // Check for duplicates before adding
       setMessages(prev => {
+        // Check if this is a server response to our temp message
+        const tempMessageIndex = prev.findIndex(msg => 
+          msg.id && msg.id.toString() === message.tempId
+        );
+        
+        if (tempMessageIndex !== -1) {
+          // Replace temp message with server message
+          const newMessages = [...prev];
+          newMessages[tempMessageIndex] = {
+            ...message,
+            status: 'sent' // Set initial status as sent
+          };
+          return newMessages;
+        }
+        
         const isDuplicate = prev.some(msg => 
           msg.id === message.id || 
           (msg.content === message.content && 
@@ -241,14 +292,45 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     );
   };
 
+
+  const handleMessageRead = (data) => {
+    if (!isMountedRef.current) return;
+    
+    setMessages(prevMessages => 
+      prevMessages.map(msg => {
+        if (msg.id === data.messageId && msg.sender_id === user.id) {
+          return {
+            ...msg,
+            status: 'read'
+          };
+        }
+        return msg;
+      })
+    );
+  };
+
   const sendMessage = () => {
     if (!inputText.trim() || !isConnected) return;
 
+    const tempId = Date.now().toString();
     const messageData = {
       connectionId: connection.id,
       senderId: user.id,
-      content: inputText.trim()
+      content: inputText.trim(),
+      tempId: tempId
     };
+
+    // Add temporary message with 'sending' status
+    const tempMessage = {
+      id: tempId,
+      connection_id: connection.id,
+      sender_id: user.id,
+      content: inputText.trim(),
+      timestamp: new Date().toISOString(),
+      status: 'sending'
+    };
+
+    setMessages(prev => [...prev, tempMessage]);
 
     const success = SocketService.sendMessage(messageData);
     
@@ -257,9 +339,22 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
       setInputText('');
       handleStopTyping();
       
-      // Don't add message locally - let it come back from server to prevent duplicates
+      // Update temp message status to 'sent'
+      setTimeout(() => {
+        setMessages(prev => 
+          prev.map(msg => {
+            if (msg.id === tempId) {
+              return { ...msg, status: 'sent' };
+            }
+            return msg;
+          })
+        );
+      }, 100);
+      
       // Auto-scroll will happen when server message is received
     } else {
+      // Remove temp message on failure
+      setMessages(prev => prev.filter(msg => msg.id !== tempId));
       Alert.alert('Error', 'Failed to send message. Please check your connection.');
     }
   };

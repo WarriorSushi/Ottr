@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
+import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { LoadingAnimations, CommunicationAnimations } from '../utils/LottieLibrary';
 import { useTheme } from '../contexts/ThemeContext';
@@ -11,8 +12,14 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
   
   const formatTime = (timestamp) => {
     // Use the actual message timestamp when it was sent
+    if (!timestamp) return '';
     const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // 12-hour format with AM/PM
+    return date.toLocaleTimeString([], { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
   };
 
 
@@ -74,7 +81,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
               {message.content}
             </Text>
             
-            {/* Time and status in bottom-right corner for outgoing messages */}
+            {/* Fixed position timestamp and ticks in bottom right */}
             <View style={styles.bottomRightContainer}>
               <Text style={[styles.timestampCorner, { color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)' }]}>
                 {formatTime(message.timestamp)}
@@ -86,15 +93,49 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
                       {...LoadingAnimations.small()}
                     />
                   )}
-                  {message.status === 'sent' && (
-                    <LottieView
-                      {...CommunicationAnimations.sent()}
-                    />
+                  {(message.status === 'sent' || (!message.status && message.id)) && (
+                    <View style={styles.readReceiptContainer}>
+                      <Svg width="16" height="8" viewBox="0 0 16 8" fill="none">
+                        {/* First tick - crisp */}
+                        <Path 
+                          d="M1 4L3.5 6.5L7.5 1" 
+                          stroke={isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)'} 
+                          strokeWidth="1.3" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                        />
+                        {/* Second tick - crisp */}
+                        <Path 
+                          d="M6 4L8.5 6.5L12.5 1" 
+                          stroke={isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)'} 
+                          strokeWidth="1.3" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                        />
+                      </Svg>
+                    </View>
                   )}
-                  {message.status === 'delivered' && (
-                    <LottieView
-                      {...CommunicationAnimations.delivered()}
-                    />
+                  {message.status === 'read' && (
+                    <View style={styles.readReceiptContainer}>
+                      <Svg width="16" height="8" viewBox="0 0 16 8" fill="none">
+                        {/* First tick - bright green */}
+                        <Path 
+                          d="M1 4L3.5 6.5L7.5 1" 
+                          stroke="#00D84A" 
+                          strokeWidth="1.3" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                        />
+                        {/* Second tick - bright green */}
+                        <Path 
+                          d="M6 4L8.5 6.5L12.5 1" 
+                          stroke="#00D84A" 
+                          strokeWidth="1.3" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                        />
+                      </Svg>
+                    </View>
                   )}
                 </View>
               )}
@@ -161,7 +202,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 2,
     paddingHorizontal: 10, // Tighter padding
-    paddingVertical: 6, // Much tighter vertical padding
+    paddingVertical: 6, // Tighter bubble
   },
   ownMessageBubble: {
     borderBottomRightRadius: 6,
@@ -182,13 +223,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '400',
-    paddingRight: 50, // Space for timestamp on the right
-    marginBottom: 0, // Remove bottom margin
+    paddingRight: 60, // Space for time+tick
+    paddingBottom: 12, // Reduced to match actual time/tick space needed
   },
   bottomRightContainer: {
     position: 'absolute',
-    bottom: -2,
-    right: 0,
+    bottom: 2,
+    right: 4,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -204,7 +245,15 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   deliveryStatusInline: {
-    marginLeft: 3,
+    marginLeft: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  readReceiptContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 16,
+    height: 16,
   },
   incomingMessageText: {
     paddingRight: 35, // Space for timestamp on the right (no delivery status)
