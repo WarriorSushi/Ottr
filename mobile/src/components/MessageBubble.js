@@ -1,11 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
+import * as Haptics from 'expo-haptics';
 import { LoadingAnimations, CommunicationAnimations } from '../utils/LottieLibrary';
 import { useTheme } from '../contexts/ThemeContext';
 
-const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpacing = 0 }) => {
+const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpacing = 0, onReaction, onLongPress, isSelected = false }) => {
   const { theme, isDark } = useTheme();
   
   const formatTime = (timestamp) => {
@@ -14,19 +15,60 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  return (
-    <View style={[
-      styles.container,
-      isOwnMessage ? styles.ownMessageContainer : styles.otherMessageContainer,
-      { marginTop: extraSpacing === 1 ? 8 : 2 } // Quadruple spacing for sender change
-    ]}>
-      {isOwnMessage ? (
-        <LinearGradient
-          colors={theme.myMessageBg}
-          start={[0, 1]}
-          end={[0, 0]}
-          style={[styles.bubble, styles.ownMessageBubble]}
+
+  const handleLongPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (onLongPress) {
+      onLongPress(message.id);
+    }
+  };
+
+  const handleReaction = (emoji) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (onReaction) {
+      onReaction(message.id, emoji);
+    }
+  };
+
+  const renderReaction = () => {
+    if (!message.reaction) return null;
+    
+    return (
+      <View style={[styles.reactionContainer, isOwnMessage ? styles.reactionRight : styles.reactionLeft]}>
+        <TouchableOpacity 
+          style={[styles.reactionBubble, { backgroundColor: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.9)' }]}
+          onPress={() => handleReaction(message.reaction)}
         >
+          <Text style={styles.reactionEmoji}>{message.reaction}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+
+  return (
+    <>
+      <View style={[
+        styles.container,
+        isOwnMessage ? styles.ownMessageContainer : styles.otherMessageContainer,
+        { marginTop: extraSpacing === 1 ? 8 : 2 }, // Quadruple spacing for sender change
+        message.reaction && { marginBottom: 12 } // Extra margin when message has reaction
+      ]}>
+      {isOwnMessage ? (
+        <Pressable
+          onLongPress={handleLongPress}
+          delayLongPress={500}
+        >
+          <LinearGradient
+            colors={theme.myMessageBg}
+            start={[0, 1]}
+            end={[0, 0]}
+            style={[
+              styles.bubble, 
+              styles.ownMessageBubble,
+              isSelected && { opacity: 0.7, transform: [{ scale: 0.98 }] }
+            ]}
+          >
           <View style={styles.messageContent}>
             <Text style={[styles.messageText, { color: isDark ? '#ffffff' : '#000000' }]}>
               {message.content}
@@ -58,14 +100,24 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
               )}
             </View>
           </View>
-        </LinearGradient>
+          </LinearGradient>
+          {renderReaction()}
+        </Pressable>
       ) : (
-        <LinearGradient
-          colors={theme.otherMessageBg}
-          start={[0, 1]}
-          end={[1, 0]}
-          style={[styles.bubble, styles.otherMessageBubble]}
+        <Pressable
+          onLongPress={handleLongPress}
+          delayLongPress={500}
         >
+          <LinearGradient
+            colors={theme.otherMessageBg}
+            start={[0, 1]}
+            end={[1, 0]}
+            style={[
+              styles.bubble, 
+              styles.otherMessageBubble,
+              isSelected && { opacity: 0.7, transform: [{ scale: 0.98 }] }
+            ]}
+          >
           <View style={styles.messageContent}>
             <Text style={[styles.messageText, styles.incomingMessageText, { color: isDark ? '#ffffff' : '#000000' }]}>
               {message.content}
@@ -78,9 +130,12 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
               </Text>
             </View>
           </View>
-        </LinearGradient>
+          </LinearGradient>
+          {renderReaction()}
+        </Pressable>
       )}
-    </View>
+      </View>
+    </>
   );
 };
 
@@ -88,6 +143,7 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 2, // Reduced from 4 for tighter spacing
     marginHorizontal: 12, // Reduced from 20 for tighter spacing
+    zIndex: 1,
   },
   ownMessageContainer: {
     alignItems: 'flex-end',
@@ -181,6 +237,34 @@ const styles = StyleSheet.create({
   },
   otherTimestamp: {
     color: 'rgba(255, 255, 255, 0.8)',
+  },
+  reactionContainer: {
+    position: 'absolute',
+    bottom: -8,
+  },
+  reactionLeft: {
+    right: 8,
+  },
+  reactionRight: {
+    right: 8,
+  },
+  reactionBubble: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  reactionEmoji: {
+    fontSize: 12,
+    textAlign: 'center',
   },
 });
 

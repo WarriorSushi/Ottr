@@ -53,6 +53,10 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [messageOffset, setMessageOffset] = useState(initialMessages.length);
+  
+  // Emoji picker state
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedMessageId, setSelectedMessageId] = useState(null);
   const flatListRef = useRef();
   const typingTimeoutRef = useRef();
   const settingsSlideAnim = useRef(new Animated.Value(1)).current;
@@ -72,6 +76,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
       SocketService.off('typing_indicator', handleTypingIndicator);
       SocketService.off('connection_disconnected', handleConnectionDisconnected);
       SocketService.off('user_status_changed', handleUserStatusChanged);
+      SocketService.off('message_reaction', handleIncomingReaction);
       
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -94,6 +99,7 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     SocketService.on('typing_indicator', handleTypingIndicator);
     SocketService.on('connection_disconnected', handleConnectionDisconnected);
     SocketService.on('user_status_changed', handleUserStatusChanged);
+    SocketService.on('message_reaction', handleIncomingReaction);
   };
 
   const setupKeyboardListeners = () => {
@@ -210,6 +216,31 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     }
   };
 
+  const handleIncomingReaction = (data) => {
+    if (!isMountedRef.current) return;
+    
+    setMessages(prevMessages => 
+      prevMessages.map(msg => {
+        if (msg.id === data.messageId) {
+          if (data.action === 'remove') {
+            // Remove reaction
+            return {
+              ...msg,
+              reaction: null
+            };
+          } else {
+            // Set new reaction
+            return {
+              ...msg,
+              reaction: data.emoji
+            };
+          }
+        }
+        return msg;
+      })
+    );
+  };
+
   const sendMessage = () => {
     if (!inputText.trim() || !isConnected) return;
 
@@ -259,6 +290,51 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
+  };
+
+  const handleMessageReaction = (messageId, emoji) => {
+    if (!isMountedRef.current) return;
+    
+    // Close emoji picker
+    setShowEmojiPicker(false);
+    setSelectedMessageId(null);
+    
+    // Update local state immediately for instant feedback
+    setMessages(prevMessages => 
+      prevMessages.map(msg => {
+        if (msg.id === messageId) {
+          const currentReaction = msg.reaction; // Single reaction instead of array
+          
+          if (currentReaction === emoji) {
+            // Remove reaction if same emoji clicked
+            return {
+              ...msg,
+              reaction: null
+            };
+          } else {
+            // Set new reaction (replace any existing)
+            return {
+              ...msg,
+              reaction: emoji
+            };
+          }
+        }
+        return msg;
+      })
+    );
+
+    // Send reaction to server via socket
+    SocketService.sendReaction({
+      messageId,
+      emoji,
+      connectionId: connection.id,
+      userId: user.id
+    });
+  };
+
+  const handleMessageLongPress = (messageId) => {
+    setSelectedMessageId(messageId);
+    setShowEmojiPicker(true);
   };
 
   const openSettings = () => {
@@ -325,6 +401,9 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
         isOwnMessage={isOwnMessage}
         showUsername={showUsername}
         extraSpacing={extraSpacing}
+        onReaction={handleMessageReaction}
+        onLongPress={handleMessageLongPress}
+        isSelected={selectedMessageId === item.id}
       />
     );
   };
@@ -528,6 +607,55 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
           </SafeAreaView>
         </KeyboardAvoidingView>
 
+        {/* Global Emoji Picker */}
+        {showEmojiPicker && (
+          <View style={styles.globalEmojiPickerOverlay}>
+            <TouchableOpacity 
+              style={styles.globalEmojiPickerBackdrop}
+              onPress={() => {
+                setShowEmojiPicker(false);
+                setSelectedMessageId(null);
+              }}
+              activeOpacity={1}
+            />
+            <View style={styles.globalEmojiPicker}>
+              {['❤️', '😂', '👍', '😍', '😢'].map((emoji, index) => {
+                const selectedMessage = messages.find(msg => msg.id === selectedMessageId);
+                const isSelected = selectedMessage?.reaction === emoji;
+                
+                return (
+                  <TouchableOpacity 
+                    key={index}
+                    style={[
+                      styles.globalEmojiButton,
+                      isSelected && styles.globalEmojiButtonSelected
+                    ]}
+                    onPress={() => {
+                      console.log('Global emoji pressed:', emoji);
+                      if (selectedMessageId) {
+                        handleMessageReaction(selectedMessageId, emoji);
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.globalEmojiText}>{emoji}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+              <TouchableOpacity 
+                style={styles.globalEmojiButton}
+                onPress={() => {
+                  setShowEmojiPicker(false);
+                  setSelectedMessageId(null);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.globalEmojiText, { color: '#666' }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Sliding Settings Screen */}
         {showSettings && (
           <Animated.View
@@ -730,6 +858,56 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#666666',
     fontWeight: '500',
+  },
+  globalEmojiPickerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 999999,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  globalEmojiPickerBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  globalEmojiPicker: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    gap: 6,
+  },
+  globalEmojiButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  globalEmojiButtonSelected: {
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  globalEmojiText: {
+    fontSize: 18,
+    textAlign: 'center',
   },
 });
 

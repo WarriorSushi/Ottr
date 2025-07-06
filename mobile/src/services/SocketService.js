@@ -83,6 +83,11 @@ class SocketService {
       console.log('User went offline');
       this.emit('user_status_changed', { ...data, online: false });
     });
+
+    this.socket.on('message_reaction', (data) => {
+      console.log('Message reaction received');
+      this.emit('message_reaction', data);
+    });
   }
 
   joinUser(userData) {
@@ -128,6 +133,16 @@ class SocketService {
   disconnectConnection(data) {
     if (!this.socket || !this.isConnected) return;
     this.socket.emit('disconnect_connection', data);
+  }
+
+  sendReaction(reactionData) {
+    if (!this.socket || !this.isConnected) {
+      console.error('Socket not connected');
+      return false;
+    }
+    
+    this.socket.emit('send_reaction', reactionData);
+    return true;
   }
 
   on(event, callback) {
