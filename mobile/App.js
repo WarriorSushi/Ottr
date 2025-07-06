@@ -76,10 +76,18 @@ function AppContent() {
         
         // Load connection data in background without blocking UI
         ApiService.getCurrentConnection(userData.id)
-          .then(connectionData => {
+          .then(async (connectionData) => {
             if (connectionData.connection) {
               setCurrentConnection(connectionData.connection);
-              setInitialMessages(connectionData.recent_messages || []);
+              
+              // Load only recent 30 messages for faster startup
+              try {
+                const messagesResponse = await ApiService.getMessages(connectionData.connection.id, 30, 0);
+                setInitialMessages(messagesResponse.messages || []);
+              } catch (error) {
+                console.error('Error loading recent messages:', error);
+                setInitialMessages([]);
+              }
             }
           })
           .catch(error => {
@@ -153,14 +161,22 @@ function AppContent() {
     }
   };
 
-  const handleConnectionEstablished = (connection, messages = []) => {
+  const handleConnectionEstablished = async (connection, messages = []) => {
     // Show loading animation for connection establishment
     setLoadingText("Opening your chat");
     setIsLoading(true);
     setShowSplash(true);
     
     setCurrentConnection(connection);
-    setInitialMessages(messages);
+    
+    // Load recent messages with pagination for new connections
+    try {
+      const messagesResponse = await ApiService.getMessages(connection.id, 30, 0);
+      setInitialMessages(messagesResponse.messages || []);
+    } catch (error) {
+      console.error('Error loading messages for new connection:', error);
+      setInitialMessages(messages); // Fallback to provided messages
+    }
     
     // Smooth transition to chat
     setTimeout(() => {

@@ -3,7 +3,7 @@
 
 export const LottieAnimations = {
   // Loading States
-  loading: require('../../assets/animations/loading.json'),
+  loading: require('../../assets/lottie/loading.json'),
   pullRefresh: require('../../assets/animations/pull-refresh.json'),
   
   // Communication States
@@ -15,6 +15,7 @@ export const LottieAnimations = {
   success: require('../../assets/animations/success.json'),
   connection: require('../../assets/animations/connection.json'),
   celebration: require('../../assets/animations/celebration.json'),
+  blueTick: require('../../assets/lottie/blue tick lottie.json'),
   
   // Empty & Error States
   emptyState: require('../../assets/animations/empty-state.json'),
@@ -71,6 +72,14 @@ export const AnimationConfig = {
     autoPlay: true,
     loop: false,
     style: { width: 100, height: 60 },
+  },
+  
+  // Blue tick for connection accepted
+  blueTick: {
+    animation: LottieAnimations.blueTick,
+    autoPlay: true,
+    loop: false,
+    style: { width: 60, height: 60 },
   },
   
   // Celebration for special moments
@@ -156,6 +165,7 @@ export const FeedbackAnimations = {
   connection: () => getAnimationConfig('connection'),
   celebration: () => getAnimationConfig('celebration'),
   error: () => getAnimationConfig('error'),
+  blueTick: () => getAnimationConfig('blueTick'),
 };
 
 export const StateAnimations = {

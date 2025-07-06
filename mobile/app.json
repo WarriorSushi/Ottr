@@ -10,7 +10,8 @@
     "description": "One-to-One Exclusive Messaging - Connect with exactly one person at a time for exclusive conversations",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ottr.messaging"
     },
     "android": {
       "adaptiveIcon": {

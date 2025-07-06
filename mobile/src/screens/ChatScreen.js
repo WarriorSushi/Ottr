@@ -13,8 +13,10 @@ import {
   StatusBar,
   Keyboard,
   Animated,
-  ImageBackground
+  ImageBackground,
+  Image
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
@@ -46,6 +48,11 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
   const [isConnected, setIsConnected] = useState(true);
   const [otherUserOnline, setOtherUserOnline] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Pagination state
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [messageOffset, setMessageOffset] = useState(initialMessages.length);
   const flatListRef = useRef();
   const typingTimeoutRef = useRef();
   const settingsSlideAnim = useRef(new Animated.Value(1)).current;
@@ -110,7 +117,37 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
     };
   };
 
-
+  // Load more messages for pagination
+  const loadMoreMessages = async () => {
+    if (isLoadingMore || !hasMoreMessages || !isMountedRef.current) return;
+    
+    try {
+      console.log('📚 Loading more messages, offset:', messageOffset);
+      setIsLoadingMore(true);
+      
+      const response = await ApiService.getMessages(connection.id, 20, messageOffset);
+      const olderMessages = response.messages || [];
+      
+      if (olderMessages.length === 0) {
+        setHasMoreMessages(false);
+        console.log('📚 No more messages to load');
+        return;
+      }
+      
+      // Add older messages to the beginning of the array
+      setMessages(prevMessages => [...olderMessages, ...prevMessages]);
+      setMessageOffset(prev => prev + olderMessages.length);
+      
+      console.log('📚 Loaded', olderMessages.length, 'more messages');
+      
+    } catch (error) {
+      console.error('Error loading more messages:', error);
+    } finally {
+      if (isMountedRef.current) {
+        setIsLoadingMore(false);
+      }
+    }
+  };
 
   const handleNewMessage = (message) => {
     if (!isMountedRef.current) return;
@@ -393,6 +430,10 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
             showsVerticalScrollIndicator={false}
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
+            onEndReached={loadMoreMessages}
+            onEndReachedThreshold={0.1}
+            refreshing={isLoadingMore}
+            onRefresh={loadMoreMessages}
             ListHeaderComponent={() => (
               otherUserTyping ? (
                 <View style={styles.typingIndicatorContainer}>
@@ -401,6 +442,15 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
                       {...CommunicationAnimations.typing()}
                     />
                     <Text style={[styles.typingText, dynamicStyles.typingText]}>{otherUser.username} is typing...</Text>
+                  </View>
+                </View>
+              ) : null
+            )}
+            ListFooterComponent={() => (
+              isLoadingMore && hasMoreMessages ? (
+                <View style={styles.loadingContainer}>
+                  <View style={styles.loadingBox}>
+                    <Text style={styles.loadingText}>Loading</Text>
                   </View>
                 </View>
               ) : null
@@ -433,12 +483,33 @@ const ChatScreen = ({ user, connection, initialMessages = [], onDisconnect }) =>
                   disabled={!inputText.trim() || !isConnected}
                 >
                   <LinearGradient
-                    colors={inputText.trim() && isConnected ? ['#3b82f6', '#8b5cf6'] : ['#ccc', '#aaa']}
+                    colors={inputText.trim() && isConnected ? ['#3B82F6', '#FF8A65'] : ['#000000', '#000000']}
                     start={[0, 0]}
                     end={[1, 1]}
                     style={styles.sendButtonGradient}
                   >
-                    <Text style={styles.sendButtonText}>✈</Text>
+                    <Svg 
+                      width="24" 
+                      height="24" 
+                      viewBox="0 0 24 24" 
+                      fill="none"
+                      style={{ transform: [{ rotate: '-90deg' }] }}
+                    >
+                      <Path 
+                        d="M9.51002 4.23001L18.07 8.51001C21.91 10.43 21.91 13.57 18.07 15.49L9.51002 19.77C3.75002 22.65 1.40002 20.29 4.28002 14.54L5.15002 12.81C5.37002 12.37 5.37002 11.64 5.15002 11.2L4.28002 9.46001C1.40002 3.71001 3.76002 1.35001 9.51002 4.23001Z" 
+                        stroke="white" 
+                        strokeWidth="1.5" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                      <Path 
+                        d="M5.44 12H10.84" 
+                        stroke="white" 
+                        strokeWidth="1.5" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                    </Svg>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -581,12 +652,11 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   sendButtonGradient: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 50,
-    minHeight: 50,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   sendButtonDisabled: {
     opacity: 0.6,
@@ -595,7 +665,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#ffffff',
     fontWeight: 'bold',
-    transform: [{ rotate: '-90deg' }],
+    textAlign: 'center',
   },
   typingIndicatorContainer: {
     marginVertical: 8,
@@ -627,6 +697,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748b',
     fontStyle: 'italic',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+  },
+  loadingBox: {
+    backgroundColor: '#fffff0', // Ivory color
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  loadingText: {
+    fontSize: 10,
+    color: '#666666',
+    fontWeight: '500',
   },
 });
 
