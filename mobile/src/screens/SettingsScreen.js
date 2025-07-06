@@ -11,6 +11,7 @@ import {
   Image,
   Dimensions
 } from 'react-native';
+import Svg, { Path, Circle, Polyline, Rect, G } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -169,7 +170,13 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
             
             <View style={styles.settingItem}>
               <View style={styles.settingLeft}>
-                <Text style={[styles.settingIcon, { color: theme.accent }]}>👤</Text>
+                <View style={styles.settingIcon}>
+                  <Svg width="24" height="24" viewBox="0 0 1024 1024">
+                    <Path d="M512 661.3c-117.6 0-213.3-95.7-213.3-213.3S394.4 234.7 512 234.7 725.3 330.4 725.3 448 629.6 661.3 512 661.3z m0-341.3c-70.6 0-128 57.4-128 128s57.4 128 128 128 128-57.4 128-128-57.4-128-128-128z" fill="#5F6379" />
+                    <Path d="M837 862.9c-15.7 0-30.8-8.7-38.2-23.7C744.3 729.5 634.4 661.3 512 661.3s-232.3 68.1-286.8 177.9c-10.5 21.1-36.1 29.7-57.2 19.2s-29.7-36.1-19.2-57.2C217.8 662.3 357 576 512 576s294.2 86.3 363.2 225.2c10.5 21.1 1.9 46.7-19.2 57.2-6.1 3-12.6 4.5-19 4.5z" fill="#5F6379" />
+                    <Path d="M512 1002.7c-270.6 0-490.7-220.1-490.7-490.7S241.4 21.3 512 21.3s490.7 220.1 490.7 490.7-220.1 490.7-490.7 490.7z m0-896c-223.5 0-405.3 181.8-405.3 405.3S288.5 917.3 512 917.3 917.3 735.5 917.3 512 735.5 106.7 512 106.7z" fill="#3688FF" />
+                  </Svg>
+                </View>
                 <View>
                   <Text style={[styles.settingTitle, { color: theme.text }]}>
                     Connected with
@@ -183,7 +190,15 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
 
             <View style={styles.settingItem}>
               <View style={styles.settingLeft}>
-                <Text style={[styles.settingIcon, { color: theme.info }]}>📱</Text>
+                <View style={styles.settingIcon}>
+                  <Svg width="24" height="24" viewBox="0 0 48 48">
+                    <G id="Electrocardiogram">
+                      <Rect id="矩形" fillOpacity="0.01" fill="#FFFFFF" x="0" y="0" width="48" height="48" />
+                      <Circle id="椭圆形" stroke={theme.info} strokeWidth="4" fill="#2F88FF" fillRule="nonzero" strokeLinejoin="round" cx="24" cy="24" r="20" />
+                      <Polyline id="路径-16" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points="11 28.1320956 16.6844708 28.1320956 21.2233858 13 24.8952638 35 29.4483373 24.6175277 32.9127137 28.1320956 37 28.1320956" />
+                    </G>
+                  </Svg>
+                </View>
                 <View>
                   <Text style={[styles.settingTitle, { color: theme.text }]}>
                     Connection Status
@@ -204,7 +219,11 @@ const SettingsScreen = ({ visible, onClose, onDisconnect, otherUser }) => {
             
             <View style={styles.settingItem}>
               <View style={styles.settingLeft}>
-                <Text style={[styles.settingIcon, { color: theme.primary }]}>ℹ️</Text>
+                <View style={styles.settingIcon}>
+                  <Svg width="24" height="24" viewBox="0 0 60 60">
+                    <Path d="M30,0A30,30,0,1,1,0,30,30,30,0,0,1,30,0ZM30,48a4,4,0,0,1-4-4V28a4,4,0,0,1,8,0V44A4,4,0,0,1,30,48Zm0-36a4,4,0,1,1-4,4A4,4,0,0,1,30,12Z" fill={theme.primary} fillRule="evenodd"/>
+                  </Svg>
+                </View>
                 <View>
                   <Text style={[styles.settingTitle, { color: theme.text }]}>
                     Version
