@@ -81,7 +81,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
               {message.content}
             </Text>
             
-            {/* Fixed position timestamp and ticks in bottom right */}
+            {/* Time and status in bottom-right corner for outgoing messages */}
             <View style={styles.bottomRightContainer}>
               <Text style={[styles.timestampCorner, { color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)' }]}>
                 {formatTime(message.timestamp)}
@@ -96,7 +96,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
                   {(message.status === 'sent' || (!message.status && message.id)) && (
                     <View style={styles.readReceiptContainer}>
                       <Svg width="16" height="8" viewBox="0 0 16 8" fill="none">
-                        {/* First tick - crisp */}
+                        {/* First tick - gray for sent */}
                         <Path 
                           d="M1 4L3.5 6.5L7.5 1" 
                           stroke={isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)'} 
@@ -104,7 +104,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
                           strokeLinecap="round" 
                           strokeLinejoin="round"
                         />
-                        {/* Second tick - crisp */}
+                        {/* Second tick - gray for sent */}
                         <Path 
                           d="M6 4L8.5 6.5L12.5 1" 
                           stroke={isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)'} 
@@ -118,7 +118,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
                   {message.status === 'read' && (
                     <View style={styles.readReceiptContainer}>
                       <Svg width="16" height="8" viewBox="0 0 16 8" fill="none">
-                        {/* First tick - bright green */}
+                        {/* First tick - green for read */}
                         <Path 
                           d="M1 4L3.5 6.5L7.5 1" 
                           stroke="#00D84A" 
@@ -126,7 +126,7 @@ const MessageBubble = ({ message, isOwnMessage, showUsername = false, extraSpaci
                           strokeLinecap="round" 
                           strokeLinejoin="round"
                         />
-                        {/* Second tick - bright green */}
+                        {/* Second tick - green for read */}
                         <Path 
                           d="M6 4L8.5 6.5L12.5 1" 
                           stroke="#00D84A" 
@@ -201,8 +201,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
     shadowRadius: 2,
-    paddingHorizontal: 10, // Tighter padding
-    paddingVertical: 6, // Tighter bubble
+    paddingHorizontal: 5, // Tighter padding
+    paddingVertical: 6, // Much tighter vertical padding
   },
   ownMessageBubble: {
     borderBottomRightRadius: 6,
@@ -223,13 +223,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '400',
-    paddingRight: 60, // Space for time+tick
-    paddingBottom: 12, // Reduced to match actual time/tick space needed
+    paddingRight: 40, // Space for timestamp on the right
+    paddingLeft: 5,
+    paddingBottom: 5, // 1px gap between text and time
   },
   bottomRightContainer: {
     position: 'absolute',
-    bottom: 2,
-    right: 4,
+    bottom: -4,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -241,19 +242,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timestampCorner: {
-    fontSize: 9, // Much smaller timestamp
+    fontSize: 8, // Much smaller timestamp
     fontWeight: '400',
   },
   deliveryStatusInline: {
-    marginLeft: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginLeft: 3,
   },
   readReceiptContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     width: 16,
-    height: 16,
+    height: 8,
   },
   incomingMessageText: {
     paddingRight: 35, // Space for timestamp on the right (no delivery status)
